@@ -30,6 +30,10 @@ Summary information on each category harvested is printed to the console and als
 	Executed in 0:11:14.846379
 
 
+## API calls
+
+Discourse comes with a full suite of JSON APIs. The first script in the Tulip perspective, called `10_build_network_from_cats.py`, accesses APIs by calling functions that are contained in another one of the scripts, `90_discourse_API_functions.py`. These functions call Edgeryders APIs: of course, you should replace the edgeryders.eu URLs in the functions module with the URLs of your own Discourse site.
+
 ## API keys
 
 Discourse supports protected categories, invisible to users who have not been explicitly authorized. To access these, you will need (1) an account with the Discourse website that you want to harvest and (2) an API key associated to your username. Site admins can issue you with an API key. 

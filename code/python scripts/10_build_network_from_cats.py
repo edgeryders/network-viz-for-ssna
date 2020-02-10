@@ -15,7 +15,7 @@ Blocks:
 from tulip import *
 import time
 import datetime
-import discourse_API_Edgeryders as api
+import 90_discourse_API_functions as api
 start_script = datetime.datetime.now()
 
 from tulip import tlp
