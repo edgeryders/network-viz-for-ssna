@@ -239,16 +239,16 @@ def fetch_posts_in_topic(id):
     '''
     username = '' # add your Edgeryders username to access non-public posts
     API_key = '' #add your Edgeryders API key to access non-public posts
-    if API_key != '' and username != '':
-        call = 'https://edgeryders.eu/t/' + str(id) + '.json?page=' + str(pageCounter) + '&include_raw=1' + '&api_username=' + username + '&api_key=' + API_key # the field "raw" is handy for word count, but not included by default.
-    else:
-        call = 'https://edgeryders.eu/t/' + str(id) + '.json?page=' + str(pageCounter) + '&include_raw=1' # the field "raw" is handy for word count, but not included by default.     
         
     allPosts = [] # accumulator
     pageCounter = 1
     postList = ['something'] # need this as a condition to start the while loop
     while len(postList) > 0:
       time.sleep(0.1)
+      if API_key != '' and username != '':
+          call = 'https://edgeryders.eu/t/' + str(id) + '.json?page=' + str(pageCounter) + '&include_raw=1' + '&api_username=' + username + '&api_key=' + API_key # the field "raw" is handy for word count, but not included by default.
+      else:
+          call = 'https://edgeryders.eu/t/' + str(id) + '.json?page=' + str(pageCounter) + '&include_raw=1' # the field "raw" is handy for word count, but not included by default.
       topic = requests.get(call).json()
       if 'post_stream' in topic:
           postList = topic['post_stream']['posts']
