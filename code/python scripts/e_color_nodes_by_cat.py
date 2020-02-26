@@ -5,18 +5,8 @@ from tulip import tlp
 
 def main(graph): 
   viewFontAwesomeIcon = graph.getStringProperty("viewFontAwesomeIcon")
-  birthDate = graph.getIntegerProperty("birthDate")
   category_id = graph.getIntegerProperty("category_id")
-  commDate = graph.getDoubleProperty("commDate")
-  creation_date = graph.getStringProperty("creation_date")
-  intimacy = graph.getDoubleProperty("intimacy")
-  manager = graph.getBooleanProperty("manager")
-  name = graph.getStringProperty("name")
   numComms = graph.getIntegerProperty("numComms")
-  postDate = graph.getStringProperty("postDate")
-  post_id = graph.getIntegerProperty("post_id")
-  uid = graph.getStringProperty("uid")
-  unixDate = graph.getDoubleProperty("unixDate")
   user_id = graph.getIntegerProperty("user_id")
   user_name = graph.getStringProperty("user_name")
   viewBorderColor = graph.getColorProperty("viewBorderColor")

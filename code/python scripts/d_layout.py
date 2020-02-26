@@ -32,18 +32,7 @@ def main(graph):
 	viewLayout = graph.getLayoutProperty("viewLayout")
 	viewMetric = graph.getDoubleProperty("viewMetric")
 	viewSize = graph.getSizeProperty("viewSize")
-	birthDate = graph.getIntegerProperty("birthDate")
-	commDate = graph.getDoubleProperty("commDate")
-	comment_id = graph.getStringProperty("comment_id")
-	creation_date = graph.getStringProperty("creation_date")
-	intimacy = graph.getDoubleProperty("intimacy")
-	manager = graph.getBooleanProperty("manager")
-	name = graph.getStringProperty("name")
 	numComms = graph.getIntegerProperty("numComms")
-	postDate = graph.getStringProperty("postDate")
-	title = graph.getStringProperty("title")
-	uid = graph.getStringProperty("uid")
-	unixDate = graph.getDoubleProperty("unixDate")
 	user_name = graph.getStringProperty("user_name")
 	viewBorderColor = graph.getColorProperty("viewBorderColor")
 	viewBorderWidth = graph.getDoubleProperty("viewBorderWidth")
@@ -102,5 +91,3 @@ def main(graph):
 	for n in graph.getNodes():
 		viewLabelBorderWidth[n] = 0
 		viewLabelColor[n] = white
-
-	

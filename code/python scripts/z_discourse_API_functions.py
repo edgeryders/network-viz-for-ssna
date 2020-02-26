@@ -16,15 +16,16 @@ import requests
 import time
 import sys
 
+API_key = '' #add your Edgeryders API key to access non-public data
+
+
 def fetch_category_names():
   '''
   (None) => list of str
   return a list of categories by name
   '''
-  username = '' # add your Edgeryders username to access non-public categories
-  API_key = '' #add your Edgeryders API key to access non-public categories
-  if API_key != '' and username != '':
-    call = 'https://edgeryders.eu/categories.json?api_username=' + username + '&api_key=' + API_key
+  if API_key != '':
+    call = 'https://edgeryders.eu/categories.json?api_key=' + API_key
   else:
     call = 'https://edgeryders.eu/categories.json'  
   
@@ -53,10 +54,8 @@ def fetch_category_ids(name, exceptionNames = []):
     Take out exceptionNames (subcategories that we do not need, like 'OpenCare Research')
     Tests OK
     '''
-    username = '' # enter your Edgeryders username to access protected categories
-    API_key = '' #enter your Edgeryders API key to access protected categories
-    if API_key != '' and username != '':
-        call = 'https://edgeryders.eu/categories.json?api_username=' + username + '&api_key=' + API_key
+    if API_key != '':
+        call = 'https://edgeryders.eu/categories.json?api_key=' + API_key
     else:
         call = 'https://edgeryders.eu/categories.json'         
     
@@ -64,7 +63,7 @@ def fetch_category_ids(name, exceptionNames = []):
     cats = [] # the accumulator 
     exceptCats = [] # the accumulator for the exceptions
 
-    call = 'https://edgeryders.eu/categories.json?api_username=' + username + '&api_key=' + API_key
+    call = 'https://edgeryders.eu/categories.json?api_key=' + API_key
     response = requests.get(call)
     allCats = response.json()
     catList = allCats['category_list']['categories'] # this is a list of dicts
@@ -98,11 +97,7 @@ def fetch_topics_from_cat(cat):
     (str) => list of ints
     calls the discourse APIs. Accepts as an input the category name.
     It returns a single list of all topic ids in the categories we want. 
-    '''
-    username = '' # enter your Edgeryders username to access protected topics
-    API_key = '' # enter your Edgeryders API key to access protected topics
-    
-    
+    '''    
     print('Reading category: ' + cat)
     print ('Fetching topic ids..')
     tops = [] # the accumulator. Entries take the form {topic_id: category_id}
@@ -111,8 +106,8 @@ def fetch_topics_from_cat(cat):
     
     # the following loop continues until the page number becomes so high that the topicList is empty 
     while len(topicList) > 0:
-        if API_key != '' and username != '':
-            call = 'https://edgeryders.eu/c/' + cat + '.json?page=' + str(i) + '&api_username=' + username + '&api_key=' + API_key
+        if API_key != '':
+            call = 'https://edgeryders.eu/c/' + cat + '.json?page=' + str(i) + '&api_key=' + API_key
         else:
             call = 'https://edgeryders.eu/c/' + cat + '.json?page=' + str(i)        
         print ('Reading topics: page ' + str(i))
@@ -148,7 +143,7 @@ def fetch_public_topics_from_cat(cat):
     # the following loop continues until the page number becomes so high that the topicList is empty 
     while len(topicList) > 0:
         call = 'https://edgeryders.eu/c/' + cat + '.json?page=' + str(i)
-        print ('Reading posts: page ' + str(i))
+        print ('Reading topics: page ' + str(i))
         time.sleep(1)
         response = requests.get(call)
         catTopics = response.json()
@@ -182,7 +177,7 @@ def fetch_public_tops_with_subcat_from_cat(cat):
     while len(topicList) > 0:
         call = 'https://edgeryders.eu/c/' + cat + '.json?page=' + str(i)
         print ('Reading posts: page ' + str(i))
-        time.sleep(1)
+        time.sleep(.2)
         response = requests.get(call)
         catTopics = response.json()
         topicList = catTopics['topic_list']['topics']
@@ -216,6 +211,7 @@ def fetch_topics_from_tag(tag):
     # the following loop continues until the page number becomes so high that the topicList is empty 
     while len(topicList) > 0:
         call = 'https://edgeryders.eu/tags/' + str(tag) + '.json?page=' + str(i)
+        print ('Reading topics: page ' + str(i))
         time.sleep(.2)
         response = requests.get(call)
         tagTopics = response.json()
@@ -237,16 +233,13 @@ def fetch_posts_in_topic(id):
     It also contains the usernames of the source and the target of each post.
     When the target is not specified, we assume it to be the person who authored the first post in the topic.
     '''
-    username = '' # add your Edgeryders username to access non-public posts
-    API_key = '' #add your Edgeryders API key to access non-public posts
-        
     allPosts = [] # accumulator
     pageCounter = 1
     postList = ['something'] # need this as a condition to start the while loop
     while len(postList) > 0:
       time.sleep(0.1)
-      if API_key != '' and username != '':
-          call = 'https://edgeryders.eu/t/' + str(id) + '.json?page=' + str(pageCounter) + '&include_raw=1' + '&api_username=' + username + '&api_key=' + API_key # the field "raw" is handy for word count, but not included by default.
+      if API_key != '':
+          call = 'https://edgeryders.eu/t/' + str(id) + '.json?page=' + str(pageCounter) + '&include_raw=1' + '&api_key=' + API_key # the field "raw" is handy for word count, but not included by default.
       else:
           call = 'https://edgeryders.eu/t/' + str(id) + '.json?page=' + str(pageCounter) + '&include_raw=1' # the field "raw" is handy for word count, but not included by default.
       topic = requests.get(call).json()
@@ -294,10 +287,8 @@ def fetch_consenting():
   (None) => list
   Returns a list of users who gave consent for their content to be used in research
   '''   
-  API_key = '' # enter your Edgeryders API key here
-  username = '' # Enter your Edgeryders username
   consenting = []
-  call = 'https://edgeryders.eu/administration/annotator/users.json?api_key=' + API_key + '&username=' + username
+  call = 'https://edgeryders.eu/administration/annotator/users.json?api_key=' + API_key
   response = requests.get(call).json()
   for person in response:
     if person['edgeryders_consent'] == '1':
@@ -312,7 +303,7 @@ def fetch_nonConsenting():
   API_key = '' # enter your Edgeryders API key here
   username = '' # Enter your Edgeryders username
   nonConsenting = []
-  call = 'https://edgeryders.eu/administration/annotator/users.json?api_key=' + API_key + '&username=' + username
+  call = 'https://edgeryders.eu/administration/annotator/users.json?api_key=' + API_key
   response = requests.get(call).json()
   for person in response:
     if person['edgeryders_consent'] == '0':
@@ -345,24 +336,84 @@ def count_views_in_cat(cat):
     (string) => int
     Counts the number of views in a category
     '''
-    API_key = '' # enter your Edgeryders API key here
-    username = '' # Enter your Edgeryders username
     counter = 0
     tops = fetch_topics_from_cat(cat) # this returns the topics IDs
     for top in tops:
-        if API_key != '' and username != '':
-            call = 'https://edgeryders.eu/t/' + str(top) + '.json?username=' + username + '&API_key=' + API_key
+        if API_key != '':
+            call = 'https://edgeryders.eu/t/' + str(top) + '.json?api_key=' + API_key
         else:
             call = 'https://edgeryders.eu/t/' + str(top) + '.json'         
         response = requests.get(call).json()
         counter += response['views']
     return counter
+    
+def fetch_annos(tag = ''):
+    '''
+    (str) => list of dicts
+    Return a list of annotations filtered by tag
+    '''
+    allAnnotations = []
+    baseCall = 'https://edgeryders.eu/annotator/annotations.json?api_key=' + API_key
+    if tag != '':
+        baseCall = baseCall + '&discourse_tag=' + tag                    
+    found = 100 # initializing like this to meet the WHILE condition the first time
+    pageCounter = 1 
+    while found == 100:
+        print ('Now reading page ' + str (pageCounter))
+        call = baseCall + '&page=' + str(pageCounter)
+        response = requests.get(call).json()
+        found = len(response)
+        allAnnotations = allAnnotations + response
+        pageCounter += 1        
+    print ('Annotations found: ' + str(len(allAnnotations)))
+    return allAnnotations
+    
+    
+def fetch_codes():
+    '''
+    (list of dicts) => list of dicts
+    the argument is a list of annotations, as returned from fetch_anno_from _posts. 
+    Returns a list of dicts, each one containing the information about one code.
+    High level: read all codes from the endpoint: https://edgeryders.eu/t/using-the-edgeryders-eu-apis/7904#heading--3-1
+    Then iterate across the input annotations and store in a list the codes that refer to those annotations.
+    '''
+    allCodes = []
+    baseCall = 'https://edgeryders.eu/annotator/codes.json?per_page=500&api_key=' + API_key
+    found = 500 # initializing like this to meet the WHILE condition the first time
+    pageCounter = 1 
+    while found == 500:
+        print ('Now reading page ' + str (pageCounter))
+        call = baseCall + '&page=' + str(pageCounter)
+        response = requests.get(call).json()
+        found = len(response)
+        allCodes = allCodes + response
+        pageCounter += 1        
+    print ('Codes found: ' + str(len(allCodes)))
+    return allCodes
+    
+def fetch_codes_from_annos(annoList):
+    '''
+    (list of dicts) => list of dicts
+    return the codes associated to a list of annotations
+    '''
+    # start by creating a list of all codes:
+    codes = []
+    checkCodes = [] # use this to make sure codes are only added once to codes
+    allCodes = fetch_codes()    
+    for anno in annoList:
+        for code in allCodes:
+            if code['id'] == anno['code_id'] and code['id'] not in checkCodes:
+                codes.append(code)
+                checkCodes.append(code['id'])
+    return codes
+
         
             
 if __name__ == '__main__':
     greetings = 'Hello world'
     print (greetings)
     # testing a function
-    views = count_views_in_cat('earthos/the-reef')
-    print(views)
-
+    OCI = count_views_in_cat('openvillage/ocilab')
+    print (OCI)
+    OV = count_views_in_cat('openvillage')
+    print (OV)

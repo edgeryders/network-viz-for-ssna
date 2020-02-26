@@ -17,18 +17,8 @@ from tulip import tlp
 # to run the script on the current graph
 
 def main(graph): 
-  name = graph.getStringProperty("name")
-  numComms = graph.getIntegerProperty("numComms")
-  postDate = graph.getStringProperty("postDate")
-  uid = graph.getStringProperty("uid")
-  unixDate = graph.getDoubleProperty("unixDate")
-  viewFontAwesomeIcon = graph.getStringProperty("viewFontAwesomeIcon")
-  birthDate = graph.getIntegerProperty("birthDate")
+  viewFontAwesomeIcon = graph.getStringProperty("viewFontAwesomeIcon")  
   category_id = graph.getIntegerProperty("category_id")
-  commDate = graph.getDoubleProperty("commDate")
-  creation_date = graph.getStringProperty("creation_date")
-  intimacy = graph.getDoubleProperty("intimacy")
-  manager = graph.getBooleanProperty("manager")
   post_id = graph.getIntegerProperty("post_id")
   user_id = graph.getIntegerProperty("user_id")
   user_name = graph.getStringProperty("user_name")
