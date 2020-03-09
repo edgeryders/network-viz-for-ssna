@@ -15,7 +15,8 @@ In Discourse:
 import requests
 import time
 import sys
-import discourse_API_config # you API key gores in this file to access non-public data
+import discourse_API_config as cng # you API key gores in this file to access non-public data
+API_key = cng.API_key
 
 
 
@@ -294,7 +295,7 @@ def check_consent(username):
     consent = False
     call = 'https://edgeryders.eu/u/' + username + '.json?api_key=' + API_key
     response = requests.get(call).json()
-    if response['user']['custom_fields']['edgeryders_consent'] == '1':
+    if str(response['user']['custom_fields']['edgeryders_consent']) == '1':
         consent = True
     return consent
     
