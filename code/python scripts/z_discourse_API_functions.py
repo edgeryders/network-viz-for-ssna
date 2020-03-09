@@ -15,8 +15,8 @@ In Discourse:
 import requests
 import time
 import sys
+import discourse_API_config # you API key gores in this file to access non-public data
 
-API_key = '' #add your Edgeryders API key to access non-public data
 
 
 def fetch_category_names():
@@ -281,6 +281,23 @@ def fetch_posts_in_topic(id):
     else:
         print('there was a problem with topic ' + str(id))
     return allPosts
+    
+    
+##### edgeryders conseent function, see https://edgeryders.eu/u/johncoate.json
+
+def check_consent(username):
+    '''
+    (str) => bool
+    Returns True if username has passed the consent funnel.
+    Documentation: https://edgeryders.eu/t/consent-process-manual/11904
+    '''
+    consent = False
+    call = 'https://edgeryders.eu/u/' + username + '.json?api_key=' + API_key
+    response = requests.get(call).json()
+    if response['user']['custom_fields']['edgeryders_consent'] == '1':
+        consent = True
+    return consent
+    
         
 def fetch_consenting():
   '''
@@ -413,7 +430,4 @@ if __name__ == '__main__':
     greetings = 'Hello world'
     print (greetings)
     # testing a function
-    OCI = count_views_in_cat('openvillage/ocilab')
-    print (OCI)
-    OV = count_views_in_cat('openvillage')
-    print (OV)
+    check_consent('johncoate')
