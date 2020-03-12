@@ -295,8 +295,9 @@ def check_consent(username):
     consent = False
     call = 'https://edgeryders.eu/u/' + username + '.json?api_key=' + API_key
     response = requests.get(call).json()
-    if str(response['user']['custom_fields']['edgeryders_consent']) == '1':
-        consent = True
+    if 'edgeryders_consent' in response['user']['custom_fields']:
+        if str(response['user']['custom_fields']['edgeryders_consent']) == '1':
+            consent = True
     return consent
     
         
@@ -431,4 +432,4 @@ if __name__ == '__main__':
     greetings = 'Hello world'
     print (greetings)
     # testing a function
-    check_consent('johncoate')
+    print(check_consent('edgeryders'))
