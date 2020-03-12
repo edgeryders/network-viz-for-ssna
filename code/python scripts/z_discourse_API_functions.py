@@ -432,4 +432,4 @@ if __name__ == '__main__':
     greetings = 'Hello world'
     print (greetings)
     # testing a function
-    print(check_consent('edgeryders'))
+    success = fetch_posts_in_topic(9953)
