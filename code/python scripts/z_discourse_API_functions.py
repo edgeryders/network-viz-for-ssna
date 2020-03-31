@@ -372,7 +372,7 @@ def fetch_annos(tag = ''):
     Return a list of annotations filtered by tag
     '''
     allAnnotations = []
-    baseCall = 'https://edgeryders.eu/annotator/annotations.json?api_key=' + API_key
+    baseCall = 'https://edgeryders.eu/annotator/annotations.json?per_page=100&api_key=' + API_key
     if tag != '':
         baseCall = baseCall + '&discourse_tag=' + tag                    
     found = 100 # initializing like this to meet the WHILE condition the first time
@@ -432,4 +432,5 @@ if __name__ == '__main__':
     greetings = 'Hello world'
     print (greetings)
     # testing a function
-    success = fetch_posts_in_topic(9953)
+    success = count_views_in_cat('wellbeing')
+    print(success)

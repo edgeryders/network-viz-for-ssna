@@ -242,6 +242,6 @@ def main(graph):
           api.save_string(message3 +'\n', logfile)
       return None    
     
-  listOfTags = ['openvillage/ocilab'] # replace this list with the list of categories you want 
+  listOfTags = ['ethno-ngi-forward'] # replace this list with the list of categories you want 
   build_graph_from_tags(listOfTags)
   
