@@ -78,6 +78,7 @@ def main(graph):
       '''
   
       logfile = '/Users/albertocottica/Downloads/graphBuildLog.txt' # my log file
+      success = api.save_string(str(datetime.date.today()), logfile)
       for cat in catList:
           fest = graph.addSubGraph(cat)
           success = api.save_string(cat, logfile)
@@ -242,6 +243,9 @@ def main(graph):
           api.save_string(message3 +'\n', logfile)
       return None    
     
-  listOfTags = ['ethno-ngi-forward'] # replace this list with the list of categories you want 
-  build_graph_from_tags(listOfTags)
-  
+#  listOfTags = ['ethno-ngi-forward', 'ethno-poprebel'] # replace this list with the list of categories you want 
+#  build_graph_from_tags(listOfTags)
+#  
+  listOfCats = ['earthos/sci-fi-economics']
+  build_graph_from_cats(listOfCats)
+

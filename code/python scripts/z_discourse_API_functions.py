@@ -13,6 +13,7 @@ In Discourse:
 '''
 
 import requests
+import datetime
 import time
 import sys
 import discourse_API_config as cng # you API key gores in this file to access non-public data
@@ -143,7 +144,8 @@ def fetch_public_topics_from_cat(cat):
     
     # the following loop continues until the page number becomes so high that the topicList is empty 
     while len(topicList) > 0:
-        call = 'https://edgeryders.eu/c/' + cat + '.json?page=' + str(i)
+        call = cng.baseUrl + 'c/' + catSlug + '.json?page=' + str(i)
+        print(call)
         print ('Reading topics: page ' + str(i))
         time.sleep(1)
         response = requests.get(call)
@@ -160,15 +162,18 @@ def fetch_public_topics_from_cat(cat):
     return tops
 
 ###########    
-def fetch_public_tops_with_subcat_from_cat(cat):
+def fetch_public_tops_with_subcat_from_cat(cat, theMap = {}):
     '''
-    (str) => list of ints
+    (str) => list of dicts
     calls the discourse APIs. Accepts as an input the category name.
-    It returns a single list of tuples. representing tops in the categories we want.
-    The first element of each tuple is the topic id. The second one is the cat ID.
+    It returns a single list of dicts. representing tops in the categories we want.
+    The key is the topic id. The value is the cat ID.
     This is useful for excluding tops, for example in the workspace.
     '''
-    
+    # start by finding out the correct slug for the cat. to do this, I first create the map
+    if map == {}:
+        theMap =  make_categories_map()
+    slug = find_cat_slug(cat, theMap)
     print ('Fetching topic ids..')
     tops = [] # the accumulator. Entries take the form {topic_id: category_id}
     i = 0 #page counter
@@ -176,7 +181,7 @@ def fetch_public_tops_with_subcat_from_cat(cat):
     
     # the following loop continues until the page number becomes so high that the topicList is empty 
     while len(topicList) > 0:
-        call = 'https://edgeryders.eu/c/' + cat + '.json?page=' + str(i)
+        call = cng.baseUrl + 'c/' + slug + '.json?page=' + str(i)
         print ('Reading posts: page ' + str(i))
         time.sleep(.2)
         response = requests.get(call)
@@ -284,7 +289,7 @@ def fetch_posts_in_topic(id):
     return allPosts
     
     
-##### edgeryders conseent function, see https://edgeryders.eu/u/johncoate.json
+##### edgeryders consent function, see https://edgeryders.eu/u/johncoate.json
 
 def check_consent(username):
     '''
@@ -372,7 +377,7 @@ def fetch_annos(tag = ''):
     Return a list of annotations filtered by tag
     '''
     allAnnotations = []
-    baseCall = 'https://edgeryders.eu/annotator/annotations.json?per_page=100&api_key=' + API_key
+    baseCall = 'https://edgeryders.eu/annotator/annotations.json?api_key=' + API_key
     if tag != '':
         baseCall = baseCall + '&discourse_tag=' + tag                    
     found = 100 # initializing like this to meet the WHILE condition the first time
@@ -426,11 +431,68 @@ def fetch_codes_from_annos(annoList):
                 checkCodes.append(code['id'])
     return codes
 
+def make_categories_map():
+    '''
+    (none) => {category_id: category_full_slug}
+    A full slug includes the slug of the parent category, if any: 'parent_cat_slug/child_cat_slug'.
+    ''' 
+    print ('making a categories map...')
+    theMap = {}    
+    call = cng.baseUrl + 'categories.json'
+    top_level_categories = requests.get(call).json()['category_list']['categories']
+    for topCat in top_level_categories:
+        topCatID = topCat['id']
+        theMap[topCat['id']] = topCat['slug'] # top level categories have no parent, so their slug is already complete
+        if topCat['has_children'] == True:
+            for subCat in topCat['subcategory_ids']:
+                call2 = cng.baseUrl + 'c/' + str(subCat) + '/show.json'
+                theMap[subCat] = topCat['slug'] + '/' + requests.get(call2).json()['category']['slug']
+    return theMap
+    
+def find_cat_slug(cat, theMap):
+    '''
+    (str or int, dict) => str
+    finds the full slug to call a category via API. 
+    We want the endpoint 'example.com/c/top-level-category/subcategory.json'
+    the dict is a map made with make_categories_map(). It is quite slow, so better to run it once.
+    '''
+    # the slug of this cat
+    if type(cat) == int:
+        slug = theMap[cat]
+    else:
+        for key in theMap:
+            if theMap[key][-(len(cat)):] == cat:
+                slug = theMap[key]
+    return slug
+
+def make_gource_file(cat):
+    '''
+    (str) => None
+    writes a file digestible by Gource (https://gource.io/).
+    See: https://edgeryders.eu/t/11905
+    '''
+    theMap = make_categories_map()
+    tops = fetch_public_tops_with_subcat_from_cat(cat, theMap) # get the topics to go into the Gource viz
+    gourceList = []
+    for top in tops:
+        # first, the part of the slug common to all posts in the same topic
+        catSlug = find_cat_slug(top[1], theMap)
+        slug = catSlug + '/' + str(top[0]) + '/'
+        posts = fetch_posts_in_topic(top[0])
+        for post in posts:
+            s = post['created_at']
+            timestamp = str(int(datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%s")))
+            author = post['username']
+            post_number = str(post['post_number'])
+            gourceList.append(timestamp + '|' + author + '|' + slug + post_number)
+    with open (cng.dirPath + 'gourcefile.csv', 'w') as gourcefile:
+        for item in gourceList:
+            gourcefile.write(item + ',\n')
+        print ('file saved at ' + cng.dirPath)
         
-            
 if __name__ == '__main__':
     greetings = 'Hello world'
     print (greetings)
     # testing a function
-    success = count_views_in_cat('wellbeing')
+    success = make_gource_file('earthos')
     print(success)

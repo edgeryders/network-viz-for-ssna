@@ -57,7 +57,7 @@ def main(graph):
 	# apply the layout
 	params = tlp.getDefaultPluginParameters("FM^3 (OGDF)", graph)
 	params['Unit edge length'] = 100
-	params['Page Format'] = 'Landscape'
+	params['Page Format'] = 'Portrait'
 	graph.applyLayoutAlgorithm('FM^3 (OGDF)', viewLayout, params)
 	params = tlp.getDefaultPluginParameters("Curve edges", graph)
 	graph.applyAlgorithm('Curve edges')

@@ -39,10 +39,10 @@ def main(graph):
     if g != allCats:
       catGraphs.append(g)
 
-  blue = tlp.Color(54, 215, 209, 255)  
-  red = tlp.Color(252, 69, 7, 255)
-  green = tlp.Color(12, 255, 100, 255)
-  steel = tlp.Color(95,95,95, 255) ## steel I keep for nodes that participate in more than one conversation
+  blue = tlp.Color(102,204,255, 255)  
+  red = tlp.Color(255,204,51, 255)
+  green = tlp.Color(51,255,204, 255)
+  steel = tlp.Color(160,160,160, 255) ## steel I keep for nodes that participate in more than one conversation
   colors = [blue, red, green, steel] # need to add more colors
   for i in range(len(catGraphs)):
     for e in catGraphs[i].getEdges():
