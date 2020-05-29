@@ -484,7 +484,7 @@ def make_gource_file(cat):
             timestamp = str(int(datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%s")))
             author = post['username']
             post_number = str(post['post_number'])
-            gourceList.append(timestamp + '|' + author + '|' + slug + post_number)
+            gourceList.append(timestamp + '|' + author + '|A|' + slug + post_number)
     with open (cng.dirPath + 'gourcefile.csv', 'w') as gourcefile:
         for item in gourceList:
             gourcefile.write(item + ',\n')

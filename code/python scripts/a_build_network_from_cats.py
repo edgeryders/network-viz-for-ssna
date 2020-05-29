@@ -243,9 +243,9 @@ def main(graph):
           api.save_string(message3 +'\n', logfile)
       return None    
     
-#  listOfTags = ['ethno-ngi-forward', 'ethno-poprebel'] # replace this list with the list of categories you want 
-#  build_graph_from_tags(listOfTags)
-#  
-  listOfCats = ['earthos/sci-fi-economics']
-  build_graph_from_cats(listOfCats)
-
+  listOfTags = ['ethno-ngi-forward', 'ethno-poprebel'] # replace this list with the list of categories you want 
+  build_graph_from_tags(listOfTags)
+  
+#  listOfCats = ['ioh']
+#  build_graph_from_cats(listOfCats)
+#
