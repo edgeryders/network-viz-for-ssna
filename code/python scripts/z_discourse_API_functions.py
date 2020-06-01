@@ -243,7 +243,7 @@ def fetch_posts_in_topic(id):
     pageCounter = 1
     postList = ['something'] # need this as a condition to start the while loop
     while len(postList) > 0:
-      time.sleep(0.1)
+      time.sleep(0.05)
       if API_key != '':
           call = 'https://edgeryders.eu/t/' + str(id) + '.json?page=' + str(pageCounter) + '&include_raw=1' + '&api_key=' + API_key # the field "raw" is handy for word count, but not included by default.
       else:
@@ -436,7 +436,7 @@ def make_categories_map():
     (none) => {category_id: category_full_slug}
     A full slug includes the slug of the parent category, if any: 'parent_cat_slug/child_cat_slug'.
     ''' 
-    print ('making a categories map...')
+    print ('making a categories map. This may take a minute or so.')
     theMap = {}    
     call = cng.baseUrl + 'categories.json'
     top_level_categories = requests.get(call).json()['category_list']['categories']
@@ -470,22 +470,53 @@ def make_gource_file(cat):
     (str) => None
     writes a file digestible by Gource (https://gource.io/).
     See: https://edgeryders.eu/t/11905
-    '''
+    '''   
     theMap = make_categories_map()
     tops = fetch_public_tops_with_subcat_from_cat(cat, theMap) # get the topics to go into the Gource viz
     gourceList = []
     for top in tops:
         # first, the part of the slug common to all posts in the same topic
         catSlug = find_cat_slug(top[1], theMap)
-        slug = catSlug + '/' + str(top[0]) + '/'
-        posts = fetch_posts_in_topic(top[0])
+        topSlug = catSlug + '/' + str(top[0]) + '/'
+        # now add the part of the slug that describes in-category threading
+        posts = fetch_posts_in_topic(top[0]) #!! this function assigns value 1 to posts that have value 
+        # Null to reply_to_post_id 
+
+        ancestry = {} # I need a map to track which post is child to which. The map is specific to each topic
         for post in posts:
             s = post['created_at']
             timestamp = str(int(datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%s")))
             author = post['username']
-            post_number = str(post['post_number'])
-            gourceList.append(timestamp + '|' + author + '|A|' + slug + post_number)
-    with open (cng.dirPath + 'gourcefile.csv', 'w') as gourcefile:
+            '''
+            for each post in the topic, generate a slug that keeps track of the post's threading within the 
+            topic, with the parent post's number to the left of the child post's. 1 is omitted For example
+            {1: '', 2: '/2', 3: '/3', 4: '/3/4', 5: '/3/4/5'} and so on. 
+            The rightmost number is always the post number in the topic, except when the post number is 1
+            '''
+            post_number = post['post_number']
+            parent = post ['reply_to_post_number']
+            if post_number == 1 :
+                slug = ''
+            elif post_number > 1 and parent == 1:
+                ancestry[post_number] = 1
+                slug = str(post_number)
+            else: 
+                sluglist = []
+                ancestry[post_number] = parent
+                ## this part glitches, I never seem to get slugs with more than two elements
+                while parent > 1:
+                    sluglist.append(str(parent))
+                    if parent in ancestry:
+                        parent = ancestry[parent]
+                    else: # example, hidden reply, like post 22 in https://edgeryders.eu/t/open-source-coffee-sorter-project/7122
+                        parent = 1 # breaks the while loop
+                slug = ''
+                for i in reversed(sluglist):
+                    slug = slug + '/' + i 
+                slug = topSlug + slug + '/' + str(post_number)
+
+            gourceList.append(timestamp + '|' + author + '|A|' + slug)
+    with open (cng.dirPath + 'gourcefile2.csv', 'w') as gourcefile:
         for item in gourceList:
             gourcefile.write(item + ',\n')
         print ('file saved at ' + cng.dirPath)
@@ -495,4 +526,3 @@ if __name__ == '__main__':
     print (greetings)
     # testing a function
     success = make_gource_file('earthos')
-    print(success)
