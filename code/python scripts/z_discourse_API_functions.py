@@ -16,7 +16,7 @@ import requests
 import datetime
 import time
 import sys
-import discourse_API_config as cng # you API key gores in this file to access non-public data
+import discourse_API_config as cng # your API key goes in this file to access non-public data
 API_key = cng.API_key
 
 
@@ -173,7 +173,7 @@ def fetch_public_tops_with_subcat_from_cat(cat, theMap = {}):
     # start by finding out the correct slug for the cat. to do this, I first create the map
     if map == {}:
         theMap =  make_categories_map()
-    slug = find_cat_slug(cat, theMap)
+    slug = find_cat_info(cat, theMap)['slug']
     print ('Fetching topic ids..')
     tops = [] # the accumulator. Entries take the form {topic_id: category_id}
     i = 0 #page counter
@@ -199,8 +199,6 @@ def fetch_public_tops_with_subcat_from_cat(cat, theMap = {}):
         i +=1     
     print (str(len(tops)) + ' topic ids retrieved.')    
     return tops
-
-
 
 ##########
 
@@ -433,7 +431,8 @@ def fetch_codes_from_annos(annoList):
 
 def make_categories_map():
     '''
-    (none) => {category_id: category_full_slug}
+    (none) => dict of dicts
+    the result had the form {catId: {'slug': catFullSlug, 'color': catColor}}
     A full slug includes the slug of the parent category, if any: 'parent_cat_slug/child_cat_slug'.
     ''' 
     print ('making a categories map. This may take a minute or so.')
@@ -441,43 +440,65 @@ def make_categories_map():
     call = cng.baseUrl + 'categories.json'
     top_level_categories = requests.get(call).json()['category_list']['categories']
     for topCat in top_level_categories:
-        topCatID = topCat['id']
-        theMap[topCat['id']] = topCat['slug'] # top level categories have no parent, so their slug is already complete
+        topCatInfo ={}
+        topCatInfo['slug'] = topCat['slug'] # top level categories have no parent, so their slug is already complete
+        topCatInfo['color'] = topCat['color']
+        theMap[topCat['id']]  = topCatInfo 
         if topCat['has_children'] == True:
-            for subCat in topCat['subcategory_ids']:
-                call2 = cng.baseUrl + 'c/' + str(subCat) + '/show.json'
-                theMap[subCat] = topCat['slug'] + '/' + requests.get(call2).json()['category']['slug']
+            try: # some subcats seem inaccessible 
+                for subCat in topCat['subcategory_ids']:
+                    call2 = cng.baseUrl + 'c/' + str(subCat) + '/show.json'
+                    response = requests.get(call2).json()['category']
+                    subCatInfo = {}
+                    subCatInfo['slug'] = topCatInfo['slug'] + '/' + response['slug']
+                    subCatInfo['color']= response['color']
+                    theMap[subCat] = subCatInfo
+            except KeyError:
+                print ('Inaccessible sub-category. Id: ' + str(subCat))
     return theMap
     
-def find_cat_slug(cat, theMap):
+def find_cat_info(cat, theMap):
     '''
-    (str or int, dict) => str
-    finds the full slug to call a category via API. 
+    (str or int, dict) => dict}
+    finds the info about a category stored in theMap. 
     We want the endpoint 'example.com/c/top-level-category/subcategory.json'
     the dict is a map made with make_categories_map(). It is quite slow, so better to run it once.
     '''
     # the slug of this cat
     if type(cat) == int:
-        slug = theMap[cat]
+        theInfo = theMap[cat]
     else:
         for key in theMap:
-            if theMap[key][-(len(cat)):] == cat:
-                slug = theMap[key]
-    return slug
+            if theMap[key]['slug'] == cat:
+                theInfo = theMap[key]
+        for key in theMap: # if  no slug is exactly the same as the cat's name, we are looking at a subcat
+            if cat in theMap[key]['slug']:
+                theInfo = theMap[key]
+    return theInfo
 
-def make_gource_file(cat):
+def make_gource_file(cat, theMap = {}):
     '''
-    (str) => None
+    (str) => list
     writes a file digestible by Gource (https://gource.io/).
     See: https://edgeryders.eu/t/11905
     '''   
-    theMap = make_categories_map()
+    if theMap == {}:
+        theMap = make_categories_map()
+    if type(cat) != int: # if the cat is called by name, get the int
+        for key in theMap:
+            if theMap[key]['slug'] == cat: 
+                print ('the cat id is ' + str(key))
+                catName = cat # preserving the name of the cat, so it goes on the filename
+                cat = key # in this case, make the cat numeric
+        
     tops = fetch_public_tops_with_subcat_from_cat(cat, theMap) # get the topics to go into the Gource viz
     gourceList = []
     for top in tops:
         # first, the part of the slug common to all posts in the same topic
-        catSlug = find_cat_slug(top[1], theMap)
-        topSlug = catSlug + '/' + str(top[0]) + '/'
+        catInfo = find_cat_info(top[1], theMap)
+        catSlug = catInfo['slug']
+        catColor = catInfo['color']
+        topSlug = catSlug + '/' + str(top[0])
         # now add the part of the slug that describes in-category threading
         posts = fetch_posts_in_topic(top[0]) #!! this function assigns value 1 to posts that have value 
         # Null to reply_to_post_id 
@@ -499,11 +520,12 @@ def make_gource_file(cat):
                 slug = ''
             elif post_number > 1 and parent == 1:
                 ancestry[post_number] = 1
-                slug = str(post_number)
+                slug = '/' +str(post_number)
+            elif post_number == parent:
+                continue
             else: 
                 sluglist = []
                 ancestry[post_number] = parent
-                ## this part glitches, I never seem to get slugs with more than two elements
                 while parent > 1:
                     sluglist.append(str(parent))
                     if parent in ancestry:
@@ -513,16 +535,46 @@ def make_gource_file(cat):
                 slug = ''
                 for i in reversed(sluglist):
                     slug = slug + '/' + i 
-                slug = topSlug + slug + '/' + str(post_number)
-
-            gourceList.append(timestamp + '|' + author + '|A|' + slug)
-    with open (cng.dirPath + 'gourcefile2.csv', 'w') as gourcefile:
-        for item in gourceList:
+                    slug = slug + '/' + str(post_number)
+            gourceList.append(timestamp + '|' + author + '|A|' + topSlug + '/' + slug + '|' + str(catColor))
+    with open (cng.dirPath + 'gourcefile_' + catName + '.csv', 'w') as gourcefile:
+        for item in sorted(gourceList):
             gourcefile.write(item + ',\n')
-        print ('file saved at ' + cng.dirPath)
+        print ('gourcefile_' + catName + '.csv saved at ' + cng.dirPath)
+    return sorted(gourceList)
+    
+def join_csv_files(filelist):
+    '''
+    (list of str) => list of str
+    loads several files of the smae formats, sorts them and saves them as one
+    Used for generating gource-compatible files from Discourse
+    '''
+    theList = []
+    for filename in filelist:
+        with open (cng.dirPath + filename +'.csv', 'r') as inFile: 
+            thisFileList = inFile.readlines()
+            for line in thisFileList:
+                theList.append(line)
+    with open (cng.dirPath + 'joined-file.csv', 'w') as outFile:
+        for item in sorted(theList):
+            outFile.write(item)
+        print ('joined-file.csv saved at ' + cng.dirPath)
         
 if __name__ == '__main__':
     greetings = 'Hello world'
     print (greetings)
     # testing a function
-    success = make_gource_file('earthos')
+#    theMap = make_categories_map()
+#    success = make_gource_file('workspaces', theMap)
+#    topLevelCats = fetch_category_names()
+#    theList = []
+#    for cat in topLevelCats:
+#        catGourceList = make_gource_file(cat, theMap)
+#        theList.append(catGourceList)
+#    with open (cng.dirPath + 'completeGourceLog.csv', 'w') as theFile:
+#        for item in sorted(theList):
+#            theFile.write(item + ',\n')
+#        print ('completeGourceLog.csv saved at ' + cng.dirPath)
+    l = ['joined-file', 'gourcefile_earthos']
+    success = join_csv_files(l)
+    
