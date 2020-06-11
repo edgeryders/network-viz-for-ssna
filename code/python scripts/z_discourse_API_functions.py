@@ -249,6 +249,7 @@ def fetch_posts_in_topic(id):
           call = baseUrl + 't/' + str(id) + '.json?page=' + str(pageCounter) + '&include_raw=1' + '&api_key=' + API_key # the field "raw" is handy for word count, but not included by default.
       else:
           call = baseUrl + 't/' + str(id) + '.json?page=' + str(pageCounter) + '&include_raw=1' # the field "raw" is handy for word count, but not included by default.
+
       topic = requests.get(call).json()
       if 'post_stream' in topic:
           postList = topic['post_stream']['posts']
@@ -552,26 +553,25 @@ def make_gource_file(cat, theMap = {}):
             if post['reply_count'] > 0: # the post does have children, take care of the post-as-directory
                 if post_number == 1:
                     slug = '/1'
-            elif post_number > 1 and parent == 1:
-                ancestry[post_number] = 1
-                slug = '/' + str(post_number) 
-            elif post_number == parent:
-                continue
-            else: 
-                sluglist = []
-                ancestry[post_number] = parent
-                while parent > 1:
-                    sluglist.append(str(parent))
-                    if parent in ancestry:
-                        parent = ancestry[parent]
-                    else: # example, hidden reply, like post 22 in https://edgeryders.eu/t/open-source-coffee-sorter-project/7122
-                        parent = 1 # breaks the while loop
-                slug = ''
-                for i in reversed(sluglist):
-                    slug = slug + '/' + str(i) 
-                slug = slug + '/' + str(post_number)
-            timestamp1 = str(int(timestamp) - 1) # this prevents the two entities representing the post appearing at exactly the same time in the log
-            gourceList.append(timestamp1 + '|' + author + '|A|' + topSlug + slug + '|' + str(catColor))
+                elif post_number > 1 and parent == 1:
+                    slug = '/' + str(post_number) 
+                elif post_number == parent:
+                    continue
+                else: 
+                    sluglist = []
+                    ancestry[post_number] = parent
+                    while parent > 1:
+                        sluglist.append(str(parent))
+                        if parent in ancestry:
+                            parent = ancestry[parent]
+                        else: # example, hidden reply, like post 22 in https://edgeryders.eu/t/open-source-coffee-sorter-project/7122
+                            parent = 1 # breaks the while loop
+                    slug = ''
+                    for i in reversed(sluglist):
+                        slug = slug + '/' + str(i) 
+                    slug = slug + '/' + str(post_number)
+                timestamp1 = str(int(timestamp) - 1) # this prevents the two entities representing the post appearing at exactly the same time in the log
+                gourceList.append(timestamp1 + '|' + author + '|A|' + topSlug + slug + '|' + str(catColor))
                 
     with open (cng.dirPath + 'gourcefile_' + catName + '.csv', 'w', encoding="utf-8-sig") as gourcefile:
         for item in sorted(gourceList):
