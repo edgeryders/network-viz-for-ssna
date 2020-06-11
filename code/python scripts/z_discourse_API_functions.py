@@ -16,9 +16,11 @@ import requests
 import datetime
 import time
 import sys
+import textwrap
 import discourse_API_config as cng # your API key goes in this file to access non-public data
 API_key = cng.API_key
-
+baseUrl = cng.baseUrl
+print(sys.version)
 
 
 def fetch_category_names():
@@ -191,6 +193,7 @@ def fetch_public_tops_with_subcat_from_cat(cat, theMap = {}):
             top = []
             top.append(topic['id'])
             top.append(topic['category_id'])
+            top.append(topic['title'])
             tops.append(top)
         # the following condition returns True if the page is less than full (<30 topics). It saves a call to an empty page.
         # But I still need the while condition, because the number of topics could be 0 modulo 30.
@@ -243,9 +246,9 @@ def fetch_posts_in_topic(id):
     while len(postList) > 0:
       time.sleep(0.05)
       if API_key != '':
-          call = 'https://edgeryders.eu/t/' + str(id) + '.json?page=' + str(pageCounter) + '&include_raw=1' + '&api_key=' + API_key # the field "raw" is handy for word count, but not included by default.
+          call = baseUrl + 't/' + str(id) + '.json?page=' + str(pageCounter) + '&include_raw=1' + '&api_key=' + API_key # the field "raw" is handy for word count, but not included by default.
       else:
-          call = 'https://edgeryders.eu/t/' + str(id) + '.json?page=' + str(pageCounter) + '&include_raw=1' # the field "raw" is handy for word count, but not included by default.
+          call = baseUrl + 't/' + str(id) + '.json?page=' + str(pageCounter) + '&include_raw=1' # the field "raw" is handy for word count, but not included by default.
       topic = requests.get(call).json()
       if 'post_stream' in topic:
           postList = topic['post_stream']['posts']
@@ -260,7 +263,8 @@ def fetch_posts_in_topic(id):
               thisPost['user_id'] = post['user_id']
               thisPost['created_at'] = post['created_at']
               thisPost['raw'] = post['raw']
-              thisPost['post_number'] = post['post_number']        
+              thisPost['post_number'] = post['post_number']
+              thisPost['reply_count'] = post['reply_count']        
               if post['reply_to_post_number'] == None:
                   thisPost['reply_to_post_number'] = 1
                   thisPost['target_username'] = topic_author
@@ -498,7 +502,7 @@ def make_gource_file(cat, theMap = {}):
         catInfo = find_cat_info(top[1], theMap)
         catSlug = catInfo['slug']
         catColor = catInfo['color']
-        topSlug = catSlug + '/' + str(top[0])
+        topSlug = catSlug + '/' + textwrap.shorten(top[2], 40, placeholder='...') ## more informative, but requires Python 3.4+
         # now add the part of the slug that describes in-category threading
         posts = fetch_posts_in_topic(top[0]) #!! this function assigns value 1 to posts that have value 
         # Null to reply_to_post_id 
@@ -513,14 +517,22 @@ def make_gource_file(cat, theMap = {}):
             topic, with the parent post's number to the left of the child post's. 1 is omitted For example
             {1: '', 2: '/2', 3: '/3', 4: '/3/4', 5: '/3/4/5'} and so on. 
             The rightmost number is always the post number in the topic, except when the post number is 1
+            
+            If a post has children, I need to create two entities for each post. 
+            One is the post itself. The other is the "directory".
+            if I do not do that, all posts with replies become visualized only as directories.
+            The "directory"'s name is the post number.
+            The "post proper"'s name is the trimmed "raw" field. So, its slug is [...]/post_number/raw 
             '''
             post_number = post['post_number']
             parent = post ['reply_to_post_number']
+            raw = textwrap.shorten(post['raw'], 40, placeholder='...')
+            # first take care of the post itself. This needs to be done for every post.
             if post_number == 1 :
-                slug = ''
+                slug = '/1' + raw 
             elif post_number > 1 and parent == 1:
                 ancestry[post_number] = 1
-                slug = '/' +str(post_number)
+                slug = '/' + str(post_number) + '/' + raw 
             elif post_number == parent:
                 continue
             else: 
@@ -534,10 +546,34 @@ def make_gource_file(cat, theMap = {}):
                         parent = 1 # breaks the while loop
                 slug = ''
                 for i in reversed(sluglist):
-                    slug = slug + '/' + i 
-                    slug = slug + '/' + str(post_number)
-            gourceList.append(timestamp + '|' + author + '|A|' + topSlug + '/' + slug + '|' + str(catColor))
-    with open (cng.dirPath + 'gourcefile_' + catName + '.csv', 'w') as gourcefile:
+                    slug = slug + '/' + str(i) 
+                slug = slug + '/' + str(post_number) + '/' + raw
+            gourceList.append(timestamp + '|' + author + '|A|' + topSlug + slug + '|' + str(catColor))
+            if post['reply_count'] > 0: # the post does have children, take care of the post-as-directory
+                if post_number == 1:
+                    slug = '/1'
+            elif post_number > 1 and parent == 1:
+                ancestry[post_number] = 1
+                slug = '/' + str(post_number) 
+            elif post_number == parent:
+                continue
+            else: 
+                sluglist = []
+                ancestry[post_number] = parent
+                while parent > 1:
+                    sluglist.append(str(parent))
+                    if parent in ancestry:
+                        parent = ancestry[parent]
+                    else: # example, hidden reply, like post 22 in https://edgeryders.eu/t/open-source-coffee-sorter-project/7122
+                        parent = 1 # breaks the while loop
+                slug = ''
+                for i in reversed(sluglist):
+                    slug = slug + '/' + str(i) 
+                slug = slug + '/' + str(post_number)
+            timestamp1 = str(int(timestamp) - 1) # this prevents the two entities representing the post appearing at exactly the same time in the log
+            gourceList.append(timestamp1 + '|' + author + '|A|' + topSlug + slug + '|' + str(catColor))
+                
+    with open (cng.dirPath + 'gourcefile_' + catName + '.csv', 'w', encoding="utf-8-sig") as gourcefile:
         for item in sorted(gourceList):
             gourcefile.write(item + ',\n')
         print ('gourcefile_' + catName + '.csv saved at ' + cng.dirPath)
@@ -564,8 +600,8 @@ if __name__ == '__main__':
     greetings = 'Hello world'
     print (greetings)
     # testing a function
-#    theMap = make_categories_map()
-#    success = make_gource_file('workspaces', theMap)
+    theMap = make_categories_map()
+    success = make_gource_file('wellbeing', theMap)
 #    topLevelCats = fetch_category_names()
 #    theList = []
 #    for cat in topLevelCats:
@@ -575,6 +611,6 @@ if __name__ == '__main__':
 #        for item in sorted(theList):
 #            theFile.write(item + ',\n')
 #        print ('completeGourceLog.csv saved at ' + cng.dirPath)
-    l = ['joined-file', 'gourcefile_earthos']
-    success = join_csv_files(l)
+#    l = ['joined-file', 'gourcefile_earthos']
+#    success = join_csv_files(l)
     
