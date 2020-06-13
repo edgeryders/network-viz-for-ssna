@@ -614,7 +614,7 @@ def make_gource_file_from_tag(tag, theMap={}):
             parent = post ['reply_to_post_number']
             post_text = textwrap.shorten(post['raw'], 30, placeholder="...")
             if post_number == 1 :
-                slug = '/' + post_text
+                slug = '/1/' + post_text
             elif post_number > 1 and parent == 1:
                 ancestry[post_number] = 1
                 slug = '/1/' + post_text 
@@ -632,8 +632,8 @@ def make_gource_file_from_tag(tag, theMap={}):
                 slug = ''
                 for i in reversed(sluglist):
                     slug = slug + '/' + i 
-                slug = slug + '/' + post_text
-            gourceList.append(timestamp + '|' + author + '|A|' + topSlug + '/' + slug + '|' + str(catColor))
+                slug = slug + '/' + str(post_number) + post_text
+            gourceList.append(timestamp + '|' + author + '|A|' + topSlug + slug + '|' + str(catColor))
             if post['reply_count'] > 0: # the post does have children, take care of the post-as-directory
                 if post_number == 1:
                     slug = '/1'
