@@ -377,12 +377,12 @@ def fetch_annos(tag = ''):
     Return a list of annotations filtered by tag
     '''
     allAnnotations = []
-    baseCall = 'https://edgeryders.eu/annotator/annotations.json?api_key=' + API_key
+    baseCall = baseUrl + 'annotator/annotations.json?per_page=500&api_key=' + API_key
     if tag != '':
         baseCall = baseCall + '&discourse_tag=' + tag                    
-    found = 100 # initializing like this to meet the WHILE condition the first time
+    found = 500 # initializing like this to meet the WHILE condition the first time
     pageCounter = 1 
-    while found == 100:
+    while found == 500:
         print ('Now reading page ' + str (pageCounter))
         call = baseCall + '&page=' + str(pageCounter)
         response = requests.get(call).json()
@@ -402,7 +402,7 @@ def fetch_codes():
     Then iterate across the input annotations and store in a list the codes that refer to those annotations.
     '''
     allCodes = []
-    baseCall = 'https://edgeryders.eu/annotator/codes.json?per_page=500&api_key=' + API_key
+    baseCall = baseUrl + '/annotator/codes.json?per_page=500&api_key=' + API_key
     found = 500 # initializing like this to meet the WHILE condition the first time
     pageCounter = 1 
     while found == 500:
@@ -569,9 +569,9 @@ def make_gource_file_from_cat(cat, theMap = {}):
     return sorted(gourceList)
     
     
-def make_gource_file_from_tag(tag, theMap={}):
+def make_gource_file_from_tag(tag, theMap={}, ethno=False):
     '''
-    (str) => list
+    (str, dict, bool) => list
     writes a file digestible by Gource (https://gource.io/), starting with a tag or project.
     See: https://edgeryders.eu/t/11905
     High level:
@@ -582,9 +582,56 @@ def make_gource_file_from_tag(tag, theMap={}):
     - each post with no replies becomes an entry in the accumulator list
     - each post with at least one reply becomes TWO entries, one as a post (.../post_number/raw) and one as a "directory"
       for the replies (.../post_number)
+    - if ethno == True: 
+        - build a map from annotation ID to {post_id, code_name, timestamp, author}
+        - when going through posts, find those where the post_id corresponds to an annotation
+        - add an |M| event to that post, using the timestamp of the annotation, the ethnographer as author, and the unique color of the annotated post.
+        - (optional) also add an |A| event representing the annotation. path is "path_of_the_post/codeName"
     '''
+    def make_annotations_map(tag):
+        '''
+        (str) => dict 
+        
+        returns a dict of the form {'annotation_id': {'post_id': post_id, 'code_name': code_name, 'timestamp': timestamp, 'author': user-id }}
+        '''
+        annoMap = {}
+        codes = fetch_codes()
+        annos = fetch_annos(tag)
+        for anno in annos:
+            timestamp = str(int(datetime.datetime.strptime(anno['created_at'], '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%s")))
+            descriptor = {'post_id': anno['post_id'], 'timestamp': timestamp}
+            descriptor['creator_id'] = anno['creator_id']
+            for code in codes:
+                if code['id'] == anno['code_id']:
+                    descriptor['code_name'] = code['name']
+            annoMap[anno['id']]= descriptor 
+        ## since annotations only store the creator's ID, I need to find out the corresponding names
+        ## no point in running thousands of API calls, there are only 1-6 ethnographers in any project
+        ethnographers = {}
+        for anno in annoMap:
+            if annoMap[anno]['creator_id'] not in ethnographers:
+                usercall = baseUrl + '/admin/users/' + str(annoMap[anno]['creator_id']) + '.json?' + '&api_key=' + API_key
+                ethnographers[annoMap[anno]['creator_id']] = requests.get(usercall).json()['name']
+        for anno in annoMap:
+            for ethnographer_id in ethnographers:
+                if annoMap[anno]['creator_id'] == ethnographer_id:
+                    annoMap[anno]['creator_name'] = ethnographers[ethnographer_id]
+        return annoMap
+        
+        ## !!!!
+        ## To do: test this function. Then decide: do the annotations separately from the posts?
+        ## Or, for each post, iterate on the annotations map to see if we find any?                     
+    
+    annotationColor = 'C0B002'
+    annotatedPostColor = 'FDED2A' 
     if theMap == {}:
         theMap = make_categories_map()
+
+    if ethno == True: # make a map from annotation ID to {code_name, timestamp, author}
+        annoMap = make_annotations_map(tag)
+    
+        
+        
     tops = fetch_topics_from_tag(tag)
     gourceList = []
     for top in tops:
@@ -610,6 +657,7 @@ def make_gource_file_from_tag(tag, theMap={}):
             {1: '', 2: '/2', 3: '/3', 4: '/3/4', 5: '/3/4/5'} and so on. 
             The rightmost number is always the post number in the topic.
             '''
+            post_id = post['post_id'] # need this to check against annotations 
             post_number = post['post_number']
             parent = post ['reply_to_post_number']
             post_text = textwrap.shorten(post['raw'], 30, placeholder="...")
@@ -656,6 +704,15 @@ def make_gource_file_from_tag(tag, theMap={}):
                     slug = slug + '/' + str(post_number)
                 timestamp1 = str(int(timestamp) - 1) # this prevents the two entities representing the post appearing at exactly the same time in the log
                 gourceList.append(timestamp1 + '|' + author + '|A|' + topSlug + slug + '|' + str(catColor))
+                
+            # now do annotations
+            for anno in annoMap:
+                if annoMap[anno]['post_id'] == post_id:
+                    timestamp2 = annoMap[anno]['timestamp']
+                    ethnographer = annoMap[anno]['creator_name']
+                    code = annoMap[anno]['code_name']
+                    gourceList.append(timestamp2 + '|' + str(ethnographer) + '|M|' + topSlug + slug.replace('...', '_') + '|' + annotatedPostColor) # edit the existing node
+                    gourceList.append(timestamp2 + '|' + str(ethnographer) + '|A|' + topSlug + slug.replace('...', '_') + code + '|' + annotationColor)# add the annotation node
 
     with open (cng.dirPath + 'gourcefile_' + tag + '.csv', 'w', encoding='utf-8-sig') as gourcefile:
         for item in sorted(gourceList):
@@ -684,7 +741,7 @@ if __name__ == '__main__':
     greetings = 'Hello world'
     print (greetings)
     # testing a function
-    theMap = make_categories_map()
+#    theMap = make_categories_map()
 #    success = make_gource_file('workspaces', theMap)
 #    topLevelCats = fetch_category_names()
 #    theList = []
@@ -695,5 +752,6 @@ if __name__ == '__main__':
 #        for item in sorted(theList):
 #            theFile.write(item + ',\n')
 #        print ('completeGourceLog.csv saved at ' + cng.dirPath)
-    success = make_gource_file_from_tag('cat2-societal-balances', theMap)
+    success = make_gource_file_from_tag('ethno-ngi-forward', ethno=True)
+    # print(success)
     
