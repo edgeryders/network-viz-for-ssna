@@ -30,10 +30,18 @@ Summary information on each category harvested is printed to the console and als
 	Executed in 0:11:14.846379
 
 
-## API calls
+## API calls and Python module
 
-Discourse comes with a full suite of JSON APIs. The first script in the Tulip perspective, called `10_build_network_from_cats.py`, accesses APIs by calling functions that are contained in another one of the scripts, `90_discourse_API_functions.py`. These functions call Edgeryders APIs: of course, you should replace the edgeryders.eu URLs in the functions module with the URLs of your own Discourse site.
+Discourse comes with a full suite of JSON APIs. The first script in the Tulip perspective, called `10_build_network_from_cats.py`, accesses APIs by calling functions that are contained in a small Python module, `z_discourse_API_functions.py`. These functions call Edgeryders APIs. Over time, I have added more functions to support data visualization from a Discourse platform. 
+
+
+## Dynamic visualization with Gource
+
+The Python module contains functions that generate a custom log file compatible with [Gource](https://gource.io). You can use it to generate videos like [this](https://youtu.be/0uYQZbfFmlA). Refer to the documentation string in each function. 
 
 ## API keys
 
-Discourse supports protected categories, invisible to users who have not been explicitly authorized. To access these, you will need (1) an account with the Discourse website that you want to harvest and (2) an API key associated to your username. Site admins can issue you with an API key. 
+Discourse supports protected categories, invisible to users who have not been explicitly authorized. To access these, you will need (1) an account with the Discourse website that you want to harvest and (2) an API key associated to your username. Site admins can issue you with an API key. Modify the provided configuration file with the base URL and the API key of your own Discourse site. 
+
+
+
