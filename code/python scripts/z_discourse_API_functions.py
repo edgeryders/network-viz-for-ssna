@@ -660,12 +660,12 @@ def make_gource_file_from_tag(tag, theMap={}, ethno=False):
             post_id = post['post_id'] # need this to check against annotations 
             post_number = post['post_number']
             parent = post ['reply_to_post_number']
-            post_text = textwrap.shorten(post['raw'], 30, placeholder="...")
+            post_text = textwrap.shorten(post['raw'], 30, placeholder="...").replace('/', '_')
             if post_number == 1 :
-                slug = '/1/' + post_text
+                slug = '/' + post_text
             elif post_number > 1 and parent == 1:
                 ancestry[post_number] = 1
-                slug = '/1/' + post_text 
+                slug = '/1/' + post_text # post 2, reply to 1, is shown as /1/post2_text
             elif post_number == parent:
                 continue
             else: 
@@ -680,39 +680,16 @@ def make_gource_file_from_tag(tag, theMap={}, ethno=False):
                 slug = ''
                 for i in reversed(sluglist):
                     slug = slug + '/' + i 
-                slug = slug + '/' + str(post_number) + post_text
+                slug = '/1' + slug + '/' + post_text # post 5, reply to 3, reply to 1 is shown as /1/3/post5_text
             gourceList.append(timestamp + '|' + author + '|A|' + topSlug + slug + '|' + str(catColor))
-            if post['reply_count'] > 0: # the post does have children, take care of the post-as-directory
-                if post_number == 1:
-                    slug = '/1'
-                elif post_number > 1 and parent == 1:
-                    slug = '/1/' + str(post_number) 
-                elif post_number == parent:
-                    continue
-                else: 
-                    sluglist = []
-                    ancestry[post_number] = parent
-                    while parent > 1:
-                        sluglist.append(str(parent))
-                        if parent in ancestry:
-                            parent = ancestry[parent]
-                        else: # example, hidden reply, like post 22 in https://edgeryders.eu/t/open-source-coffee-sorter-project/7122
-                            parent = 1 # breaks the while loop
-                    slug = ''
-                    for i in reversed(sluglist):
-                        slug = slug + '/' + str(i) 
-                    slug = slug + '/' + str(post_number)
-                timestamp1 = str(int(timestamp) - 1) # this prevents the two entities representing the post appearing at exactly the same time in the log
-                gourceList.append(timestamp1 + '|' + author + '|A|' + topSlug + slug + '|' + str(catColor))
-                
             # now do annotations
             for anno in annoMap:
                 if annoMap[anno]['post_id'] == post_id:
                     timestamp2 = annoMap[anno]['timestamp']
                     ethnographer = annoMap[anno]['creator_name']
                     code = annoMap[anno]['code_name']
-                    gourceList.append(timestamp2 + '|' + str(ethnographer) + '|M|' + topSlug + slug.replace('...', '_') + '|' + annotatedPostColor) # edit the existing node
-                    gourceList.append(timestamp2 + '|' + str(ethnographer) + '|A|' + topSlug + slug.replace('...', '_') + code + '|' + annotationColor)# add the annotation node
+                    gourceList.append(timestamp2 + '|' + str(ethnographer) + '|M|' + topSlug + slug + '|' + str(catColor)) # edit the existing node
+                    gourceList.append(timestamp2 + '|' + str(ethnographer) + '|A|' + topSlug + slug.replace('...', '') + '/' + code + '|' + annotationColor)# add the annotation node
 
     with open (cng.dirPath + 'gourcefile_' + tag + '.csv', 'w', encoding='utf-8-sig') as gourcefile:
         for item in sorted(gourceList):
@@ -752,6 +729,6 @@ if __name__ == '__main__':
 #        for item in sorted(theList):
 #            theFile.write(item + ',\n')
 #        print ('completeGourceLog.csv saved at ' + cng.dirPath)
-    success = make_gource_file_from_tag('ethno-ngi-forward', ethno=True)
+    success = make_gource_file_from_tag('ethno-poprebel', ethno=True)
     # print(success)
     
