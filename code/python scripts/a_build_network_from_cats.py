@@ -20,7 +20,7 @@ sys.path.append('/Users/albertocottica/Documents/Edgeryders the company/Make net
 from tulip import *
 import time
 import datetime
-import dev_discourse_API_functions as api
+import z_discourse_API_functions as api
 start_script = datetime.datetime.now()
 
 from tulip import tlp
@@ -77,7 +77,7 @@ def main(graph):
       useful to build a network from one top-level cat, excluding one or more subcats (eg. workspace)
       '''
   
-      logfile = '/Users/albertocottica/Downloads/graphBuildLog.txt' # my log file
+      logfile = '/Users/albertocottica/Documents/graphBuildLog.txt' # my log file
       success = api.save_string(str(datetime.date.today()), logfile)
       for cat in catList:
           fest = graph.addSubGraph(cat)
@@ -164,7 +164,7 @@ def main(graph):
       useful to build a network from one top-level cat, excluding one or more subcats (eg. workspace)
       '''
   
-      logfile = '/Users/albertocottica/Downloads/graphBuildLog.txt' # my log file
+      logfile = '/Users/albertocottica/Documents/graphBuildLog.txt' # my log file
       for tag in tagList:
           fest = graph.addSubGraph(tag)
           success = api.save_string(tag, logfile)
@@ -246,6 +246,3 @@ def main(graph):
   listOfTags = ['ethno-ngi-forward', 'ethno-poprebel'] # replace this list with the list of categories you want 
   build_graph_from_tags(listOfTags)
   
-#  listOfCats = ['ioh']
-#  build_graph_from_cats(listOfCats)
-#

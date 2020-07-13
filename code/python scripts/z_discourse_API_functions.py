@@ -262,7 +262,14 @@ def fetch_posts_in_topic(id):
               thisPost['created_at'] = post['created_at']
               thisPost['raw'] = post['raw']
               thisPost['post_number'] = post['post_number']
-              thisPost['reply_count'] = post['reply_count']       
+              thisPost['reply_count'] = post['reply_count']
+              thisPost['reads'] = post['reads']
+              thisPost['readers_count'] = post['readers_count']
+              thisPost['incoming_link_count'] = post['incoming_link_count']
+              thisPost['quote_count'] = post['quote_count']
+              thisPost['like_count'] = post['like_count']
+              thisPost['score'] = post['score']
+              
               if post['reply_to_post_number'] == None:
                   thisPost['reply_to_post_number'] = 1
                   thisPost['target_username'] = topic_author
@@ -352,7 +359,7 @@ def save_string(message, filename):
   (string, string) => None
   Append message to filename. If filename is not present, create it
   '''
-  with open (filename, 'a+') as outfile:
+  with open (filename, 'a') as outfile:
     outfile.write(message + '\n')
     
 def count_views_in_cat(cat):
@@ -364,9 +371,25 @@ def count_views_in_cat(cat):
     tops = fetch_topics_from_cat(cat) # this returns the topics IDs
     for top in tops:
         if API_key != '':
-            call = 'https://edgeryders.eu/t/' + str(top) + '.json?api_key=' + API_key
+            call = baseUrl + 't/' + str(top) + '.json?api_key=' + API_key
         else:
-            call = 'https://edgeryders.eu/t/' + str(top) + '.json'         
+            call = baseUrl + 't/' + str(top) + '.json'         
+        response = requests.get(call).json()
+        counter += response['views']
+    return counter
+    
+def count_views_in_tag(tag):
+    '''
+    (string) => int
+    Counts the number of views in a category
+    '''
+    counter = 0
+    tops = fetch_topics_from_tag(tag) # this returns the topics IDs
+    for top in tops:
+        if API_key != '':
+            call = baseUrl + 't/' + str(top) + '.json?api_key=' + API_key
+        else:
+            call = baseUrl + 't/' + str(top) + '.json'         
         response = requests.get(call).json()
         counter += response['views']
     return counter
@@ -718,17 +741,4 @@ if __name__ == '__main__':
     greetings = 'Hello world'
     print (greetings)
     # testing a function
-#    theMap = make_categories_map()
-#    success = make_gource_file('workspaces', theMap)
-#    topLevelCats = fetch_category_names()
-#    theList = []
-#    for cat in topLevelCats:
-#        catGourceList = make_gource_file(cat, theMap)
-#        theList.append(catGourceList)
-#    with open (cng.dirPath + 'completeGourceLog.csv', 'w') as theFile:
-#        for item in sorted(theList):
-#            theFile.write(item + ',\n')
-#        print ('completeGourceLog.csv saved at ' + cng.dirPath)
-    success = make_gource_file_from_tag('ethno-poprebel', ethno=True)
-    # print(success)
-    
+    success = count_views_in_tag('ethno-ngi-forward')
