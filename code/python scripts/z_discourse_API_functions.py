@@ -21,30 +21,29 @@ import discourse_API_config as cng # your API key goes in this file to access no
 API_key = cng.API_key
 baseUrl = cng.baseUrl
 
+# set a request session to be used in the whole script. This is now necessary after Discourse deprecated 
+# authentication by passing parameters to the url. Read more: https://github.com/edgeryders/discourse/issues/245#issuecomment-657905349
+responses = requests.Session()
+responses.headers.update({"Api-Key": API_key})
+
 
 def fetch_category_names():
   '''
   (None) => list of str
   return a list of categories by name
   '''
-  if API_key != '':
-    call = 'https://edgeryders.eu/categories.json?api_key=' + API_key
-  else:
-    call = 'https://edgeryders.eu/categories.json'  
-  
-  
+  call = baseUrl + 'categories.json'
   
   print ('Fetching category names...')
   cats = [] # the accumulator 
 
   
-  response = requests.get(call)
+  response = responses.get(call)
   allCats = response.json()
   catList = allCats['category_list']['categories'] # this is a list of dicts
   for cat in catList:
     cats.append(cat['slug']) # cat names may return errors when called through APIs (upper case letters, spaces...)
   return cats
-
   
 
 def fetch_category_ids(name, exceptionNames = []):
@@ -57,17 +56,13 @@ def fetch_category_ids(name, exceptionNames = []):
     Take out exceptionNames (subcategories that we do not need, like 'OpenCare Research')
     Tests OK
     '''
-    if API_key != '':
-        call = 'https://edgeryders.eu/categories.json?api_key=' + API_key
-    else:
-        call = 'https://edgeryders.eu/categories.json'         
+    call = baseUrl + 'categories.json'
     
     print ('Fetching category ids...')
     cats = [] # the accumulator 
     exceptCats = [] # the accumulator for the exceptions
 
-    call = 'https://edgeryders.eu/categories.json?api_key=' + API_key
-    response = requests.get(call)
+    response = responses.get(call)
     allCats = response.json()
     catList = allCats['category_list']['categories'] # this is a list of dicts
 
@@ -81,9 +76,9 @@ def fetch_category_ids(name, exceptionNames = []):
             if cat['subcategory_ids']:
                 for subcat in cat['subcategory_ids']:
                     catItem2 = {} # the element to append to the accumulator. This time it refers to the subcategory
-                    subcatCall = 'https://edgeryders.eu/c/' + str(subcat) + '/show.json'
+                    subcatCall = baseUrl + 'c/' + str(subcat) + '/show.json'
                     time.sleep(3)
-                    subcatResponse = requests.get(subcatCall)
+                    subcatResponse = responses.get(subcatCall)
                     subcatInfo = subcatResponse.json()
                     if subcatInfo['category']['name'] not in exceptionNames: # this takes care of the exceptions
                         catItem2['id'] = subcat
@@ -109,13 +104,10 @@ def fetch_topics_from_cat(cat):
     
     # the following loop continues until the page number becomes so high that the topicList is empty 
     while len(topicList) > 0:
-        if API_key != '':
-            call = 'https://edgeryders.eu/c/' + cat + '.json?page=' + str(i) + '&api_key=' + API_key
-        else:
-            call = 'https://edgeryders.eu/c/' + cat + '.json?page=' + str(i)        
+        call = baseUrl + 'c/' + cat + '.json?page=' + str(i)  
         print ('Reading topics: page ' + str(i))
         time.sleep(.1)
-        response = requests.get(call)
+        response = responses.get(call)
         catTopics = response.json()
         topicList = catTopics['topic_list']['topics']
         for topic in topicList:
@@ -182,7 +174,7 @@ def fetch_public_tops_with_subcat_from_cat(cat, theMap = {}):
     
     # the following loop continues until the page number becomes so high that the topicList is empty 
     while len(topicList) > 0:
-        call = cng.baseUrl + 'c/' + slug + '.json?page=' + str(i)
+        call = baseUrl + 'c/' + slug + '.json?page=' + str(i)
         print ('Reading posts: page ' + str(i))
         time.sleep(.2)
         response = requests.get(call)
@@ -218,7 +210,7 @@ def fetch_topics_from_tag(tag):
         call = baseUrl + 'tags/' + str(tag) + '.json?page=' + str(i)
         print ('Reading topics: page ' + str(i))
         time.sleep(.2)
-        response = requests.get(call)
+        response = responses.get(call)
         tagTopics = response.json()
         topicList = tagTopics['topic_list']['topics']
         for topic in topicList:
@@ -243,11 +235,8 @@ def fetch_posts_in_topic(id):
     postList = ['something'] # need this as a condition to start the while loop
     while len(postList) > 0:
       time.sleep(0.05)
-      if API_key != '':
-          call = 'https://edgeryders.eu/t/' + str(id) + '.json?page=' + str(pageCounter) + '&include_raw=1' + '&api_key=' + API_key # the field "raw" is handy for word count, but not included by default.
-      else:
-          call = 'https://edgeryders.eu/t/' + str(id) + '.json?page=' + str(pageCounter) + '&include_raw=1' # the field "raw" is handy for word count, but not included by default.
-      topic = requests.get(call).json()
+      call = baseUrl + 't/' + str(id) + '.json?page=' + str(pageCounter) + '&include_raw=1' # the field "raw" is handy for word count, but not included by default.
+      topic = responses.get(call).json()
       if 'post_stream' in topic:
           postList = topic['post_stream']['posts']
           print ('Reading ' + str(len(postList)) + ' posts from topic ' + str(id))
@@ -262,14 +251,12 @@ def fetch_posts_in_topic(id):
               thisPost['created_at'] = post['created_at']
               thisPost['raw'] = post['raw']
               thisPost['post_number'] = post['post_number']
-              thisPost['reply_count'] = post['reply_count']
-              thisPost['reads'] = post['reads']
-              thisPost['readers_count'] = post['readers_count']
-              thisPost['incoming_link_count'] = post['incoming_link_count']
-              thisPost['quote_count'] = post['quote_count']
-              thisPost['like_count'] = post['like_count']
-              thisPost['score'] = post['score']
-              
+              qual_metrics = ['reply_count', 'reads', 'readers_count', 'incoming_link_count', 'quote_count', 'like_count', 'score']
+              for qm in qual_metrics:
+                  if qm in post:
+                      thisPost[qm] = post[qm]
+                  else:
+                      thisPost[qm] = 0              
               if post['reply_to_post_number'] == None:
                   thisPost['reply_to_post_number'] = 1
                   thisPost['target_username'] = topic_author
@@ -304,13 +291,13 @@ def check_consent(username):
     Returns True if username has passed the consent funnel.
     Documentation: https://edgeryders.eu/t/consent-process-manual/11904
     '''
-    consent = False
-    call = 'https://edgeryders.eu/u/' + username + '.json?api_key=' + API_key
-    response = requests.get(call).json()
-    if 'edgeryders_consent' in response['user']['custom_fields']:
-        if str(response['user']['custom_fields']['edgeryders_consent']) == '1':
-            consent = True
-    return consent
+    call = baseUrl + 'u/' + username + '.json'
+    response = responses.get(call).json()
+    if 'edgeryders_consent' in response['user']['custom_fields'] and '1' in response['user']['custom_fields']['edgeryders_consent']:
+        return True
+    else:
+        return False 
+
     
         
 def fetch_consenting():
@@ -319,8 +306,8 @@ def fetch_consenting():
   Returns a list of users who gave consent for their content to be used in research
   '''   
   consenting = []
-  call = 'https://edgeryders.eu/administration/annotator/users.json?api_key=' + API_key
-  response = requests.get(call).json()
+  call = baseUrl + 'administration/annotator/users.json'
+  response = responses.get(call).json()
   for person in response:
     if person['edgeryders_consent'] == '1':
       consenting.append(person['username'])
@@ -334,8 +321,8 @@ def fetch_nonConsenting():
   API_key = '' # enter your Edgeryders API key here
   username = '' # Enter your Edgeryders username
   nonConsenting = []
-  call = 'https://edgeryders.eu/administration/annotator/users.json?api_key=' + API_key
-  response = requests.get(call).json()
+  call = baseUrl + 'administration/annotator/users.json'
+  response = responses.get(call).json()
   for person in response:
     if person['edgeryders_consent'] == '0':
       nonConsenting.append(person['username'])
@@ -346,8 +333,8 @@ def fetch_top_level_categories():
   (None) => list
   Returns a list of slugs of only the top-level cats (no parent cats)
   '''
-  call = 'https://edgeryders.eu/site.json'
-  response = requests.get(call).json()
+  call = baseUrl + 'site.json'
+  response = responses.get(call).json()
   catList = []
   for cat in response['categories']:
     if 'parent_category_id' not in cat:
@@ -370,11 +357,8 @@ def count_views_in_cat(cat):
     counter = 0
     tops = fetch_topics_from_cat(cat) # this returns the topics IDs
     for top in tops:
-        if API_key != '':
-            call = baseUrl + 't/' + str(top) + '.json?api_key=' + API_key
-        else:
-            call = baseUrl + 't/' + str(top) + '.json'         
-        response = requests.get(call).json()
+        call  = baseUrl + 't/' + str(top) + '.json' 
+        response = responses.get(call).json()
         counter += response['views']
     return counter
     
@@ -400,15 +384,15 @@ def fetch_annos(tag = ''):
     Return a list of annotations filtered by tag
     '''
     allAnnotations = []
-    baseCall = baseUrl + 'annotator/annotations.json?per_page=500&api_key=' + API_key
+    baseCall = baseUrl + 'annotator/annotations.json?per_page=500'
     if tag != '':
         baseCall = baseCall + '&discourse_tag=' + tag                    
     found = 500 # initializing like this to meet the WHILE condition the first time
     pageCounter = 1 
     while found == 500:
-        print ('Now reading page ' + str (pageCounter))
+        print ('Now reading page ' + str (pageCounter) + ' at ' + baseCall)
         call = baseCall + '&page=' + str(pageCounter)
-        response = requests.get(call).json()
+        response = responses.get(call).json()
         found = len(response)
         allAnnotations = allAnnotations + response
         pageCounter += 1        
@@ -425,13 +409,13 @@ def fetch_codes():
     Then iterate across the input annotations and store in a list the codes that refer to those annotations.
     '''
     allCodes = []
-    baseCall = baseUrl + '/annotator/codes.json?per_page=500&api_key=' + API_key
+    baseCall = baseUrl + '/annotator/codes.json?per_page=500'
     found = 500 # initializing like this to meet the WHILE condition the first time
     pageCounter = 1 
     while found == 500:
         print ('Now reading page ' + str (pageCounter))
         call = baseCall + '&page=' + str(pageCounter)
-        response = requests.get(call).json()
+        response = responses.get(call).json()
         found = len(response)
         allCodes = allCodes + response
         pageCounter += 1        
@@ -463,7 +447,7 @@ def make_categories_map():
     print ('making a categories map. This may take a minute or so.')
     theMap = {}    
     call = cng.baseUrl + 'categories.json'
-    top_level_categories = requests.get(call).json()['category_list']['categories']
+    top_level_categories = responses.get(call).json()['category_list']['categories']
     for topCat in top_level_categories:
         topCatInfo ={}
         topCatInfo['slug'] = topCat['slug'] # top level categories have no parent, so their slug is already complete
@@ -473,7 +457,7 @@ def make_categories_map():
             try: # some subcats seem inaccessible 
                 for subCat in topCat['subcategory_ids']:
                     call2 = cng.baseUrl + 'c/' + str(subCat) + '/show.json'
-                    response = requests.get(call2).json()['category']
+                    response = responses.get(call2).json()['category']
                     subCatInfo = {}
                     subCatInfo['slug'] = topCatInfo['slug'] + '/' + response['slug']
                     subCatInfo['color']= response['color']
@@ -741,4 +725,5 @@ if __name__ == '__main__':
     greetings = 'Hello world'
     print (greetings)
     # testing a function
-    success = count_views_in_tag('ethno-ngi-forward')
+    success = check_consent('cristina_martellosio')
+    print(success)[0]
