@@ -15,7 +15,7 @@ Blocks:
 '''
 
 import sys ## remember to delete this 
-sys.path.append('/Users/albertocottica/Documents/Edgeryders the company/Make networks here') 
+sys.path.append('/Users/albertocottica/Documents/Edgeryders the company/Make networks here/make social networks') 
 
 from tulip import *
 import time
@@ -241,8 +241,10 @@ def main(graph):
           message3 = ('Executed in ' + str(running_time))
           print(message3)
           api.save_string(message3 +'\n', logfile)
-      return None    
+      return None
+      
+#  cats = ['workspaces/opencare']
+#  build_graph_from_cats(cats) 
     
   listOfTags = ['ethno-ngi-forward', 'ethno-poprebel'] # replace this list with the list of categories you want 
   build_graph_from_tags(listOfTags)
-  

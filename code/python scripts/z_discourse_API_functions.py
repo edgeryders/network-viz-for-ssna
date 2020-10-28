@@ -245,6 +245,7 @@ def fetch_posts_in_topic(id):
                   topic_author = post['username'] 
           for post in postList:        
               thisPost = {} # this becomes the item in the allPosts list
+              thisPost['topic_id'] = id # also keep track of this.
               thisPost['post_id'] = post['id']       
               thisPost['username'] = post['username']
               thisPost['user_id'] = post['user_id']
@@ -383,23 +384,31 @@ def fetch_annos(tag = ''):
     (str) => list of dicts
     Return a list of annotations filtered by tag
     '''
+    print('Reading annotations...')
     allAnnotations = []
     baseCall = baseUrl + 'annotator/annotations.json?per_page=500'
     if tag != '':
-        baseCall = baseCall + '&discourse_tag=' + tag                    
+        baseCall = baseCall + '&discourse_tag=' + tag                
     found = 500 # initializing like this to meet the WHILE condition the first time
     pageCounter = 1 
     while found == 500:
-        print ('Now reading page ' + str (pageCounter) + ' at ' + baseCall)
+        print ('Now reading page ' + str (pageCounter))
         call = baseCall + '&page=' + str(pageCounter)
         response = responses.get(call).json()
-        found = len(response)
         allAnnotations = allAnnotations + response
-        pageCounter += 1        
+        pageCounter += 1    
+        found = len(response)    
     print ('Annotations found: ' + str(len(allAnnotations)))
     return allAnnotations
     
     
+
+def fetch_annos_cat(cat):
+    '''
+    (str) => list of dicts
+    returns all annos on the topics of a cat
+    '''
+
 def fetch_codes():
     '''
     (list of dicts) => list of dicts
@@ -408,6 +417,7 @@ def fetch_codes():
     High level: read all codes from the endpoint: https://edgeryders.eu/t/using-the-edgeryders-eu-apis/7904#heading--3-1
     Then iterate across the input annotations and store in a list the codes that refer to those annotations.
     '''
+    print('Reading codes...')
     allCodes = []
     baseCall = baseUrl + '/annotator/codes.json?per_page=500'
     found = 500 # initializing like this to meet the WHILE condition the first time
@@ -491,6 +501,7 @@ def make_gource_file_from_cat(cat, theMap = {}):
     writes a file digestible by Gource (https://gource.io/).
     See: https://edgeryders.eu/t/11905
     '''   
+    catName = '' # will need this later
     if theMap == {}:
         theMap = make_categories_map()
     if type(cat) != int: # if the cat is called by name, get the int
@@ -569,10 +580,15 @@ def make_gource_file_from_cat(cat, theMap = {}):
                 timestamp1 = str(int(timestamp) - 1) # this prevents the two entities representing the post appearing at exactly the same time in the log
                 gourceList.append(timestamp1 + '|' + author + '|A|' + topSlug + slug + '|' + str(catColor))
 
-    with open (cng.dirPath + 'gourcefile_' + catName + '.csv', 'w', encoding='utf-8-sig') as gourcefile:
+    if catName == '':
+        outFileName = 'gourcefile_' + str(cat) + '.csv'
+    else: 
+        outFileName = 'gourcefile_' + str(cat) + '.csv'
+        
+    with open (cng.dirPath + outFileName, 'w', encoding='utf-8-sig') as gourcefile:
         for item in sorted(gourceList):
             gourcefile.write(item + ',\n')
-        print ('gourcefile_' + catName + '.csv saved at ' + cng.dirPath)
+        print (outFileName + '.csv saved at ' + cng.dirPath)
     return sorted(gourceList)
     
     
@@ -617,8 +633,12 @@ def make_gource_file_from_tag(tag, theMap={}, ethno=False):
         ethnographers = {}
         for anno in annoMap:
             if annoMap[anno]['creator_id'] not in ethnographers:
-                usercall = baseUrl + '/admin/users/' + str(annoMap[anno]['creator_id']) + '.json?' + '&api_key=' + API_key
-                ethnographers[annoMap[anno]['creator_id']] = requests.get(usercall).json()['name']
+                usercall = baseUrl + 'admin/users/' + str(annoMap[anno]['creator_id']) + '.json'
+                print(usercall)
+                if 'name' in  responses.get(usercall).json():
+                  ethnographers[annoMap[anno]['creator_id']] = responses.get(usercall).json()['name']
+                else:
+                  print ('ethnographer ' + str(annoMap[anno]['creator_id']) + ' is missing!')
         for anno in annoMap:
             for ethnographer_id in ethnographers:
                 if annoMap[anno]['creator_id'] == ethnographer_id:
@@ -645,7 +665,12 @@ def make_gource_file_from_tag(tag, theMap={}, ethno=False):
         # first, the part of the slug common to all posts in the same topic
         # tops contains only topic IDs, I need to call them to get to the cat ID
         callTopic = baseUrl + 't/' + str(top) + '.json'
-        cat_id = requests.get(callTopic).json()['category_id']
+        response = responses.get(callTopic).json()
+        if 'category_id' in response: 
+            cat_id = response['category_id']
+        else:
+            cat_id = ''
+            print(callTopic)
         catInfo = find_cat_info(cat_id, theMap)
         catSlug = catInfo['slug']
         catColor = catInfo['color']
@@ -693,7 +718,10 @@ def make_gource_file_from_tag(tag, theMap={}, ethno=False):
             for anno in annoMap:
                 if annoMap[anno]['post_id'] == post_id:
                     timestamp2 = annoMap[anno]['timestamp']
-                    ethnographer = annoMap[anno]['creator_name']
+                    if 'creator_name' in annoMap[anno]: # some ethnographers IDs are missing: https://github.com/edgeryders/annotator_store-gem/issues/188
+                      ethnographer = annoMap[anno]['creator_name']
+                    else:
+                      ethnographer = 'deleted'
                     code = annoMap[anno]['code_name']
                     gourceList.append(timestamp2 + '|' + str(ethnographer) + '|M|' + topSlug + slug + '|' + str(catColor)) # edit the existing node
                     gourceList.append(timestamp2 + '|' + str(ethnographer) + '|A|' + topSlug + slug.replace('...', '') + '/' + code + '|' + annotationColor)# add the annotation node
@@ -707,7 +735,7 @@ def make_gource_file_from_tag(tag, theMap={}, ethno=False):
 def join_csv_files(filelist):
     '''
     (list of str) => list of str
-    loads several files of the smae formats, sorts them and saves them as one
+    loads several files of the same formats, sorts them and saves them as one
     Used for generating gource-compatible files from Discourse
     '''
     theList = []
@@ -725,5 +753,9 @@ if __name__ == '__main__':
     greetings = 'Hello world'
     print (greetings)
     # testing a function
-    success = check_consent('cristina_martellosio')
-    print(success)[0]
+    # success = make_gource_file_from_tag('ethno-opencare', ethno=True)
+    success = fetch_annos('ethno-opencare')
+    print(success[0])
+    success = make_gource_file_from_tag('ethno-opencare', ethno=True)
+
+        
