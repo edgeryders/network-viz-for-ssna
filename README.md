@@ -1,5 +1,7 @@
-# discourse-social-networks
-Beautiful, fast social network representations of the conversation on online fora running Discourse. Made for https://edgeryders.eu. 
+# Network Visualizations for Social Semantic Network Analysis on a Discourse forum
+
+
+Beautiful, fast network representations of the conversation on online fora running Discourse. Made for https://edgeryders.eu. This project is currently undergoing major restructuring, so that the documentation is out of date.
 
 
 ## What you need
