@@ -408,7 +408,22 @@ def fetch_annos_cat(cat):
     (str) => list of dicts
     returns all annos on the topics of a cat
     '''
-
+    
+def decompose_ancestry(ancestry):
+    '''
+    (str) => list of strs
+    breaks down ancestry from '12/345/6789' to ['12', '345', '6789']
+    auxiliary to fetch_codes_from_annos(annoList)
+    '''
+    ancestors = []
+    while ancestry != None and ancestry != '' and '/' in ancestry:
+        i = ancestry.rfind('/') # the parent code_id is to the right of the last '/'
+        ancestor = ancestry[i+1:]
+        ancestors.append(ancestor)
+        ancestry = ancestry[:i] 
+    ancestors.append(ancestry) # in this case append the whole string
+    return ancestors
+            
 def fetch_codes():
     '''
     (list of dicts) => list of dicts
@@ -432,6 +447,7 @@ def fetch_codes():
     print ('Codes found: ' + str(len(allCodes)))
     return allCodes
     
+    
 def fetch_codes_from_annos(annoList):
     '''
     (list of dicts) => list of dicts
@@ -441,11 +457,25 @@ def fetch_codes_from_annos(annoList):
     codes = []
     checkCodes = [] # use this to make sure codes are only added once to codes
     allCodes = fetch_codes()    
+    print('Filtering for annotations...')
     for anno in annoList:
         for code in allCodes:
             if code['id'] == anno['code_id'] and code['id'] not in checkCodes:
                 codes.append(code)
                 checkCodes.append(code['id'])
+    # some codes might have parents that are not contained in any annotation. 
+    # In order to preserve the complete hierarchy, I need to pull these from allCodes
+    print('Checking for parent nodes missing from annotations...')
+    missingParents = []
+    for code1 in codes:
+        ancestry = code1['ancestry']
+        thisCodeAncestors = decompose_ancestry(ancestry)
+        for item in thisCodeAncestors:
+            if item not in missingParents and item not in checkCodes: # make sure the parent code is not already in codes
+                missingParents.append(item)
+    for code in allCodes:
+        if str(code['id']) in missingParents:
+            codes.append(code)
     return codes
 
 def make_categories_map():
@@ -754,8 +784,9 @@ if __name__ == '__main__':
     print (greetings)
     # testing a function
     # success = make_gource_file_from_tag('ethno-opencare', ethno=True)
-    success = fetch_annos('ethno-opencare')
-    print(success[0])
-    success = make_gource_file_from_tag('ethno-opencare', ethno=True)
+    myd= '2345'
+    success = decompose_ancestry(myd)
+    print(success)
+    
 
         

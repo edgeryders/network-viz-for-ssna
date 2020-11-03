@@ -69,6 +69,7 @@ def main(graph):
         description = graph.getStringProperty('description')
         creator_id = graph.getStringProperty('creator_id')
         ancestry = graph.getStringProperty('ancestry')
+        parent_code = graph.getStringProperty('parent_code')
         ann_count = graph.getIntegerProperty('annotations_count')
         name = graph.getStringProperty('name')
         for locale in locales:
@@ -84,8 +85,8 @@ def main(graph):
                 description[n] = code['description']
             creator_id[n] = str(code['creator_id'])
             ancestry[n] = str(code['ancestry'])
-            ann_count[n] = code['annotations_count']
-            name[n] = code['name']
+            if code['ancestry'] != None: # if the ancestry is None the code breaks
+                parent_code[n] = api.decompose_ancestry(code['ancestry'])[0] # the first element of the list is the direct parent
             for item in code['names']:
                 graph.setNodePropertiesValues(n, {'name_' + item['locale']: item['name']})  
         print('*** Nodes added ***')

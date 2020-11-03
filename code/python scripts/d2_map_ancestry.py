@@ -50,6 +50,7 @@ def main(graph):
         (None)=> graph
         the returned subgraph has to be a tree
         '''
+        parent_code = graph.getStringProperty('parent_code')
         ch = graph.addSubGraph('codes hierarchy')
         # create the root node
         projectName = graph.getName()
@@ -59,12 +60,10 @@ def main(graph):
             newNode = ch.addNode(n)
         # add ancestry edges
         for n in graph.getNodes():
-            if ancestry[n] == 'None':
+            if parent_code[n] == 'None':
                 e = ch.addEdge(root, n)
             else: 
-               # the parent code is the one whose code_id corresponds to the number to the right of the  '/'
-               i = ancestry[n].rfind('/')
-               parent = ancestry[n][i+1:]
+               parent = parent_code[n]
                for p in graph['code_id'].getNodesEqualTo(parent):
                    e = ch.addEdge(p, n)            
 
