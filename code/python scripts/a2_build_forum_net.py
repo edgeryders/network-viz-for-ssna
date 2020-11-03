@@ -70,8 +70,7 @@ def main(graph):
         creator_id = graph.getStringProperty('creator_id')
         ancestry = graph.getStringProperty('ancestry')
         parent_code = graph.getStringProperty('parent_code')
-        ann_count = graph.getIntegerProperty('annotations_count')
-        name = graph.getStringProperty('name')
+        annotations_count = graph.getIntegerProperty('annotations_count')
         for locale in locales:
             # I need to derive the property names from the data, and then assign them to properties 
             # See https://stackoverflow.com/questions/8530694/use-iterator-as-variable-name-in-python-loop
@@ -84,6 +83,7 @@ def main(graph):
             if code['description']: # if the description is None the code breaks
                 description[n] = code['description']
             creator_id[n] = str(code['creator_id'])
+            annotations_count[n] = code['annotations_count']
             ancestry[n] = str(code['ancestry'])
             if code['ancestry'] != None: # if the ancestry is None the code breaks
                 parent_code[n] = api.decompose_ancestry(code['ancestry'])[0] # the first element of the list is the direct parent

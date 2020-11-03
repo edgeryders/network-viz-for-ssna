@@ -12,7 +12,6 @@ def main(graph):
     code_id = graph['code_id']
     creator_id = graph['creator_id']
     description = graph['description']
-    name = graph['name']
     name_cs = graph['name_cs']
     name_en = graph['name_en']
     name_pl = graph['name_pl']
@@ -54,14 +53,15 @@ def main(graph):
         ch = graph.addSubGraph('codes hierarchy')
         # create the root node
         projectName = graph.getName()
-        root = ch.addNode({'name': projectName, 'ancestry': 'root'})
-        # add all the other nodes. 
+#        root = ch.addNode({'name_en': projectName, 'ancestry': 'root'})
+#        # add all the other nodes. 
         for n in graph.getNodes():
             newNode = ch.addNode(n)
         # add ancestry edges
         for n in graph.getNodes():
             if parent_code[n] == 'None':
-                e = ch.addEdge(root, n)
+                a = 1
+#                e = ch.addEdge(root, n)
             else: 
                parent = parent_code[n]
                for p in graph['code_id'].getNodesEqualTo(parent):

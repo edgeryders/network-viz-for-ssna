@@ -469,10 +469,11 @@ def fetch_codes_from_annos(annoList):
     missingParents = []
     for code1 in codes:
         ancestry = code1['ancestry']
-        thisCodeAncestors = decompose_ancestry(ancestry)
-        for item in thisCodeAncestors:
-            if item not in missingParents and item not in checkCodes: # make sure the parent code is not already in codes
-                missingParents.append(item)
+        if ancestry != None:
+            thisCodeAncestors = decompose_ancestry(ancestry)
+            for item in thisCodeAncestors:
+                if item not in missingParents and int(item) not in checkCodes: # make sure the parent code is not already in codes
+                    missingParents.append(item)
     for code in allCodes:
         if str(code['id']) in missingParents:
             codes.append(code)
