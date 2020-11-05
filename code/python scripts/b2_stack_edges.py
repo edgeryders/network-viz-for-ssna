@@ -116,13 +116,16 @@ def main(graph):
 			for edge in nonStacked.getEdges():
 				source = nonStacked.source(edge)
 				target = nonStacked.target(edge)
+				color = viewColor[edge]
 				# source and target are nodes connect
 				subEdge = findEdge(source, target, stacked, False, True)
 				if subEdge == None: # the stacked does not contain any edge between source and target
 					subEdge = stacked.addEdge(source, target)
 					cooc[subEdge] = 1
+					viewColor[subEdge] = color
 				else:
 					cooc[subEdge] += 1
+					viewColor[subEdge] = color
 				
 
 	

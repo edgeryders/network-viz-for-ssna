@@ -515,6 +515,7 @@ def find_cat_info(cat, theMap):
     the dict is a map made with make_categories_map(). It is quite slow, so better to run it once.
     '''
     # the slug of this cat
+    theInfo = cat # I need this because this call can be called by others
     if type(cat) == int:
         theInfo = theMap[cat]
     else:

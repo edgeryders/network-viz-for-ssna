@@ -66,12 +66,12 @@ def main(graph):
     viewTgtAnchorShape = graph['viewTgtAnchorShape']
     viewTgtAnchorSize = graph['viewTgtAnchorSize']
 
-    def prettify_cooc_graph(graph):
+    def prettify_cooc_graph(graph, intensity=True):
         '''
-        (graph, graph) => None
+        (graph, bool) => None
         applies a force directed layout algo on graph.
         Also maps number of annotiations onto node size
-        and color intensity to number of co-occurrences
+        if intensity == True, also map edge color intensity to number of co-occurrences
         '''
         	# apply the layout
         params = tlp.getDefaultPluginParameters("FM^3 (OGDF)", graph)
@@ -98,17 +98,18 @@ def main(graph):
         graph.applySizeAlgorithm('Size Mapping', params)
         
         # apply color mapping: edges
-        colors = [tlp.Color.Gray, tlp.Color.Red]
-        colorScale = tlp.ColorScale(colors)
-        params = tlp.getDefaultPluginParameters("Color Mapping", graph)
-        params['input property'] = cooccurrences
-        params['type'] = 'logarithmic'
-        params['target'] = 'edges'
-        params['color scale'] = colorScale
-        graph.applyColorAlgorithm('Color Mapping', params)
-        # nodes
-        params['input property'] = annotations_count
-        params['target'] = 'nodes'
-        graph.applyColorAlgorithm('Color Mapping', params)
-        
-    success = prettify_cooc_graph(graph)
+        if intensity == True:
+            colors = [tlp.Color.Gray, tlp.Color.Red]
+            colorScale = tlp.ColorScale(colors)
+            params = tlp.getDefaultPluginParameters("Color Mapping", graph)
+            params['input property'] = cooccurrences
+            params['type'] = 'logarithmic'
+            params['target'] = 'edges'
+            params['color scale'] = colorScale
+            graph.applyColorAlgorithm('Color Mapping', params)
+            # nodes
+            params['input property'] = annotations_count
+            params['target'] = 'nodes'
+            graph.applyColorAlgorithm('Color Mapping', params)
+            
+    success = prettify_cooc_graph(graph, False)
