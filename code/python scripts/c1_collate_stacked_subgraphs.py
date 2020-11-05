@@ -1,5 +1,6 @@
 # Creates a subgraph with the stacked edges in each category. 
-# This is the graph to visualize
+# This is the graph to visualize.
+# Run from the root
 
 from tulip import tlp
 
