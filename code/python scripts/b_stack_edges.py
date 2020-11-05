@@ -1,17 +1,6 @@
 # run this to stack edges on top of each other
 
-# To cancel the modifications performed by the script
-# on the current graph, click on the undo button.
-
-# Some useful keyboards shortcuts : 
-#   * Ctrl + D : comment selected lines.
-#   * Ctrl + Shift + D  : uncomment selected lines.
-#   * Ctrl + I : indent selected lines.
-#   * Ctrl + Shift + I  : unindent selected lines.
-#   * Ctrl + Return  : run script.
-#   * Ctrl + F  : find selected text.
-#   * Ctrl + R  : replace selected text.
-#   * Ctrl + Space  : show auto-completion dialog.
+# run from the supergraph of the graphs you want to stack. In general, this is the root graph.
 
 from tulip import *
 
@@ -116,13 +105,16 @@ def main(graph):
 			for edge in nonStacked.getEdges():
 				source = nonStacked.source(edge)
 				target = nonStacked.target(edge)
+				color = viewColor[edge]
 				# source and target are nodes connect
 				subEdge = findEdge(source, target, stacked, False, True)
 				if subEdge == None: # the stacked does not contain any edge between source and target
 					subEdge = stacked.addEdge(source, target)
 					cooc[subEdge] = 1
+					viewColor[subEdge] = color
 				else:
 					cooc[subEdge] += 1
+					viewColor[subEdge] = color
 				
 
 	
