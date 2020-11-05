@@ -3,7 +3,19 @@
 
 Beautiful, fast network representations of the conversation on online fora running Discourse. Made for https://edgeryders.eu. 
 
-## What it does
+##  Content
+
+* [What it does](#heading--what-does)
+* [What you need](#heading--what-need)
+* [Getting started](#heading--getting-started)
+* [Repository structure](#heading--repo-structure)
+* [How to use a Tulip perspective](#heading--use-perspective)
+* [Create a social network graph](#heading--create-social-network)
+* [Create a codes co-occurrence network graph](#heading--create-codes-network)
+* [Dynamic visualizations with Gource](#heading--gource)
+
+
+## <h2 id="heading--what-does">What it does</h2>
 
 This software builds graph representations of an ethnographic corpus that lives as an online conversation in a [Discourse](https://discourse.org) forum. Such representations are maeant as tools for ethnographic analysis, and are part of a more general method called **Semantic Social Network Analysis (SSNA)**, described in [this paper](https://doi.org/10.1177%2F1525822X20908236). 
 
@@ -13,11 +25,11 @@ You can build two main types of network.
 2. A **semantic network of co-occurrence** between ethnographic codes. Nodes represent codes; edges (undirected, weighted) connect codes that have been used to annotate the same post. 
 
 
-## What you need
+## <h2 id="heading--what-need">What you need</h2>
 
 In order to use this software, you need [Tulip](https://tulip.labri.fr/TulipDrupal/). If you want to work with graphs that encode semantics (ethnographic codes), there are two additional requirements. The first one is, of course, that the Discourse forum you are working on supports OpenEthnographer, and has API endpoints for ethnographic annotations and codes. The second one is an API key for the Discourse forum, as these endpoints are not public. We developed it  for [Edgeryders](https://edgeryders.eu), and in that case instructions on how to obtain an API key are [here](https://edgeryders.eu/t/using-the-edgeryders-eu-apis/7904).  
 
-## Getting started 
+## <h2 id="heading--getting-started">Getting started</h2>
 
 1. Download and unpack this repository. 
 2. Download [Tulip](https://tulip.labri.fr/TulipDrupal/).
@@ -25,7 +37,7 @@ In order to use this software, you need [Tulip](https://tulip.labri.fr/TulipDrup
 4. Edit `discourse_API_config.py`, replacing the empty strings with the corresponding information relating to your Discourse site, working directory and API key. 
 
 
-## Repository structure
+## <h2 id="heading--repo-structure">Repository structure</h2>
 
 * To build a graph, load the Tulip perspective file corresponding to the graph you want; call its Python IDE; and execute the scripts therein as appropriate. 
 * The `code` directory contains the two main Tulip perspectives, corresponding to social interaction networks and codes co-occurrence networks (see below).
@@ -34,7 +46,7 @@ In order to use this software, you need [Tulip](https://tulip.labri.fr/TulipDrup
 * The file called `z_discourse_API_functions.py`is a Python module that contains functions to query the Discourse APIs. It is not meant to be executed, only imported in other scripts.
 
 
-## How to use a Tulip persspective
+## <h2 id="heading--use-perspective">How to use a Tulip perspective</h2>
 
 The main files are of a type called Tulip perspective (extension `.tlpx`). A Tulip perspective includes Python scripts, which are accessible by clicking on the Python IDE button on the left. Tulip perspectives contain the scripts themselves, the graph data, and some visualizations options. 
 
@@ -47,7 +59,7 @@ At the top of the IDE window you will find a selector bar. Use it to choose whic
 
 Note: if the IDE loads empty, that's an elusive bug. Click on the `Load` button and load the scripts from the `python scripts` directory.
 
-## Create a social network graph
+## <h2 id="heading--create-social-network">Create a social network graph</h2>
 
 ![social network graph](https://github.com/edgeryders/network-viz-for-ssna/blob/master/pictures/social_network_3_categories.png)
 
@@ -71,7 +83,7 @@ Summary information on each category harvested is printed to the console and als
 	Contributions: 2223 in 420 topics, with 396K words
 	Executed in 0:11:14.846379
 
-## Create a codes co-occurrence graph
+## <h2 id="heading--create-codes-network">Create a codes co-occurrence network graph</h2>
 
 ![codes co-occurrence graph](https://github.com/edgeryders/network-viz-for-ssna/blob/master/pictures/codes_co-occurrence_network.png)
 
@@ -86,7 +98,7 @@ The `co_occurrence_network` Tulip perspective allows you to create a network rep
 
 
 
-## Dynamic visualization with Gource
+## <h2 id="heading--gource">Dynamic visualizations with Gource</h2>
 
 The Python module contains functions that generate a custom log file compatible with [Gource](https://gource.io). You can use it to generate videos like [this](https://youtu.be/0uYQZbfFmlA). Refer to the documentation string in each function. 
 
