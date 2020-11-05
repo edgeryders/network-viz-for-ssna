@@ -42,11 +42,14 @@ The perspectives used here start with an empty graph and some Python scripts. Ru
 
 At the top of the IDE window you will find a selector bar. Use it to choose which of the graphs you are working with your script should operate on. All scripts in this repository here have a comment at the very top, indicating what graph you should select befor runnign the script.
 
-[pictures here]
+![selecting a graph on which to run the script](https://github.com/edgeryders/network-viz-for-ssna/blob/master/pictures/graph_select_bar.jpg)
+![comment at the top of the script](https://github.com/edgeryders/network-viz-for-ssna/blob/master/pictures/comment_top.jpg)
 
 Note: if the IDE loads empty, that's an elusive bug. Click on the `Load` button and load the scripts from the `python scripts` directory.
 
 ## Create a social network graph
+
+![social network graph](https://github.com/edgeryders/network-viz-for-ssna/blob/master/pictures/social_network_3_categories.png)
 
 The `social network` Tulip perspective allows you to create a social network representation of categories ("cats") or tags in Discourse fora. Nodes represent people, edges represent replies. "Alice links to Bob" means "Alice has written a reply to one of Bob's posts". The resulting graph is directed and unweighted.
 
@@ -59,7 +62,7 @@ You can include as many categories or Discourse tags as you want as you want. Th
 3. Run the script.
 4. Use the edge stacking script to generate a weighted graph of each category. An edge of weight N in the weighted graph means "Alice has written replies to N of Bob's posts". When you run the edge stacking script, the original unstacked graph and the stacked subgraph are stored into subgraphs of the category subgraph, so as sub-subgraphs of the root. In this case, the category subgraph loses mathematical and social meaning, whereas the two sub-subgraph, called "stacked" and "unstacked", preserve their interpretation as described above. 
 5. Use the collating script creates a subgraph starting from the stacked subgraphs of all categories. This represent the social network of several categories in your Discourse forum. It is useful to check how different conversations are socially intertwined, in the sense that different (but possibly partially overlapping) communities form around each category. 
-6. Use the included layout and node-coloring scripts to obtain results like the figure below. The latter is useful to visually represent the communities around the different categories. 
+6. Use the included layout and node-coloring scripts to obtain results like the figure above. The latter is useful to visually represent the communities around the different categories. 
 
 Summary information on each category harvested is printed to the console and also saved to a logfile, graphBuildLog.txt. The format output is:
 
@@ -69,6 +72,8 @@ Summary information on each category harvested is printed to the console and als
 	Executed in 0:11:14.846379
 
 ## Create a codes co-occurrence graph
+
+![codes co-occurrence graph](https://github.com/edgeryders/network-viz-for-ssna/blob/master/pictures/codes_co-occurrence_network.png)
 
 The `co_occurrence_network` Tulip perspective allows you to create a network representation of the semantics of your Discourse conversation. Nodes represent codes; edges connect codes that have been used to annotate the same post. To build it:
 
