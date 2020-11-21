@@ -77,6 +77,7 @@ def main(graph):
 		for each subgraph of the main, it creates two subgraphs: one is a copy of the original,
 		the other is a version of the original where are either zero or one edge between any two nodes.
 		When the original graph has n edges between two nodes, the new subgraph has only one, with weight n.
+		edge weight is stored in the integer property "weight".  
 		If the main has no subgraphs, create one, and rename the root. 
 		'''
 		# initialize properties I need

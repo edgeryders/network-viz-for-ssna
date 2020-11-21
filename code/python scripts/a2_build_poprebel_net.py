@@ -118,7 +118,6 @@ def main(graph):
             if topic_id == None:
                 forum = 'Czech'
             else:            
-                print(anno['id'], code_id, post_id, topic_id)
                 forum = foraMap[anno['topic_id']]
             if post_id not in theMap: # it is the first time we encounter this particular post, so we create the entry in the dict
                 entry = {'codes':[code_id], 'forum': forum}

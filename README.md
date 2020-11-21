@@ -12,6 +12,7 @@ Beautiful, fast network representations of the conversation on online fora runni
 * [How to use a Tulip perspective](#heading--use-perspective)
 * [Create a social network graph](#heading--create-social-network)
 * [Create a codes co-occurrence network graph](#heading--create-codes-network)
+* [Explore your graphs](#heading--explore-graphs)
 * [Dynamic visualizations with Gource](#heading--gource)
 
 
@@ -27,7 +28,7 @@ You can build two main types of network.
 
 ## <h2 id="heading--what-need">What you need</h2>
 
-In order to use this software, you need [Tulip](https://tulip.labri.fr/TulipDrupal/). If you want to work with graphs that encode semantics (ethnographic codes), there are two additional requirements. The first one is, of course, that the Discourse forum you are working on supports OpenEthnographer, and has API endpoints for ethnographic annotations and codes. The second one is an API key for the Discourse forum, as these endpoints are not public. We developed it  for [Edgeryders](https://edgeryders.eu), and in that case instructions on how to obtain an API key are [here](https://edgeryders.eu/t/using-the-edgeryders-eu-apis/7904).  
+In order to use this software, you need [Tulip](https://tulip.labri.fr/TulipDrupal/). If you want to work with graphs that encode semantics (ethnographic codes), there are two additional requirements. The first one is, of course, that the Discourse forum you are working on supports OpenEthnographer, and has API endpoints for ethnographic annotations and codes. The second one is an API key for the Discourse forum, as these endpoints are not public. In the case of Edgeryders, instructions on how to obtain an API key are [here](https://edgeryders.eu/t/using-the-edgeryders-eu-apis/7904).  
 
 ## <h2 id="heading--getting-started">Getting started</h2>
 
@@ -96,11 +97,15 @@ The `co_occurrence_network` Tulip perspective allows you to create a network rep
 5. To facilitate the interpretation of the codes co-occurrence network by human analysts, it may be useful to discard weaker connections between codes (edges with lower values of `k`). To do this, run the `levels_of_k` script, then select a readable graph. This generates a subgraph of the stacked graph for each level of `k`. You can then switch back and forth between them. High levels of `k` yield smaller, more legible graphs that focus on the strongest associations. Low levels of `k` preserve more of the richness of the original corpus.
 5. Use the layout script provided to create results like the one below. Brighter edges correspond to higher-`k` edges. 
 
+## <h2 id="heading--explore-graphs">Explore your graphs</h2>
+
+Once you have built your networks, your real exploration can begin. Tulip is a good tool for that: from within the Tulip perspectives you can zoom in and out, re-draw the graphs with different layouts, apply colors, highlight the neighborhoods of nodes etc. The [Tulip manual](https://tulip.labri.fr/Documentation/current/tulip-user/html/gui.html) is a good starting point to familiarize yourself with what you can do with it.
+
 
 
 ## <h2 id="heading--gource">Dynamic visualizations with Gource</h2>
 
-The Python module contains functions that generate a custom log file compatible with [Gource](https://gource.io). You can use it to generate videos like [this](https://youtu.be/0uYQZbfFmlA). Refer to the documentation string in each function. 
+The Python module contains functions that generate a custom log file compatible with [Gource](https://gource.io). You can use it to generate videos like [this](https://youtu.be/xH54IQ5blMQ). Refer to the documentation string in each function. 
 
 
 
