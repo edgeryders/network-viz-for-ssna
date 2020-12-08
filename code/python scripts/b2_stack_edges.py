@@ -46,7 +46,7 @@ def findEdge(node1, node2, graph1, directed = False, create = True):
 def main(graph): 
 	name = graph.getStringProperty("name")
 	postDate = graph.getStringProperty("postDate")
-	uid = graph.getStringProperty("uid")
+	user_id = graph.getStringProperty("user_id")
 	unixDate = graph.getDoubleProperty("unixDate")
 	viewBorderColor = graph.getColorProperty("viewBorderColor")
 	viewBorderWidth = graph.getDoubleProperty("viewBorderWidth")
@@ -81,7 +81,9 @@ def main(graph):
 		If the main has no subgraphs, create one, and rename the root. 
 		'''
 		# initialize properties I need
-		cooc = graph.getIntegerProperty('co-occurrences')
+		cooc = graph.getIntegerProperty('co-occurrences') # stores k(e)
+		connectors = graph.getStringVectorProperty('connectors') # stores the list of people making the association. Its length is kn(e)
+		uc = graph.getIntegerProperty('num_connectors') 
 		gs = []
 		for g in graph.getSubGraphs():
 		    gs.append(g)
@@ -111,8 +113,16 @@ def main(graph):
 				if subEdge == None: # the stacked does not contain any edge between source and target
 					subEdge = stacked.addEdge(source, target)
 					cooc[subEdge] = 1
+					edgeprop = setEdgePropertiesValues(subEdge, {uc:[user_id[edge]]}) 
 				else:
-					cooc[subEdge] += 1				
+					cooc[subEdge] += 1
+					connectorsList = graph.getEdgePropertiesValues(subEdge)['connectors']
+					if user_id[edge] not in connectorsList:
+						connectorsList.append(user_id[edge])
+						update = graph.setEdgePropertiesValues(subEdge, {'connectors': connectorsList})
+			# last move: iterate over edges of the stacked and compute the kn(e) property
+			for subEdge in stacked.getEdges():
+				uc[subEdge] = len(connectors[subEdge])
 
 	success = stackAll()
     

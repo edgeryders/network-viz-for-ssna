@@ -785,9 +785,10 @@ if __name__ == '__main__':
     print (greetings)
     # testing a function
     # success = make_gource_file_from_tag('ethno-opencare', ethno=True)
-    myd= '2345'
-    success = decompose_ancestry(myd)
-    print(success)
+    mya= fetch_annos('ethno-test')
+    success = fetch_codes_from_annos(mya)
+    print(success[0])
+    print(mya[0])
     
 
         
