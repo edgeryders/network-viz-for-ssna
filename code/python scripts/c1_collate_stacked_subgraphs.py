@@ -21,7 +21,6 @@ def main(graph):
   viewFontAwesomeIcon = graph.getStringProperty("viewFontAwesomeIcon")  
   category_id = graph.getIntegerProperty("category_id")
   post_id = graph.getIntegerProperty("post_id")
-  user_id = graph.getIntegerProperty("user_id")
   user_name = graph.getStringProperty("user_name")
   viewBorderColor = graph.getColorProperty("viewBorderColor")
   viewBorderWidth = graph.getDoubleProperty("viewBorderWidth")

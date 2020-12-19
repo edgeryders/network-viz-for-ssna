@@ -109,11 +109,10 @@ def main(graph):
 				source = nonStacked.source(edge)
 				target = nonStacked.target(edge)
 				# source and target are nodes connect
-				subEdge = findEdge(source, target, stacked, False, True)
+				subEdge = findEdge(source, target, stacked, False, False)
 				if subEdge == None: # the stacked does not contain any edge between source and target
 					subEdge = stacked.addEdge(source, target)
-					cooc[subEdge] = 1
-					edgeprop = setEdgePropertiesValues(subEdge, {uc:[user_id[edge]]}) 
+					success = stacked.setEdgePropertiesValues(subEdge, {'viewColor': edgeColor, 'co-occurrences': 1, 'connectors': [user_id[edge]]})
 				else:
 					cooc[subEdge] += 1
 					connectorsList = graph.getEdgePropertiesValues(subEdge)['connectors']

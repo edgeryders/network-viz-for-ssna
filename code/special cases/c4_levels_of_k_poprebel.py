@@ -33,7 +33,8 @@ def main(graph):
     viewTgtAnchorShape = graph['viewTgtAnchorShape']
     viewTgtAnchorSize = graph['viewTgtAnchorSize']
     
-    stacked = graph.getSubGraph('all Cats Stacked')
+    # stacked = graph.getSubGraph('composite') # these are ad hoc lines to adapt the levels of k code to this situation
+    stacked  = graph.getSubGraph('intersection')
     # determine the maximum value of k
     kmax = 0
     for e in stacked.getEdges():

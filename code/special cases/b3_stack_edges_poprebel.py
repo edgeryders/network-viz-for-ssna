@@ -44,9 +44,10 @@ def findEdge(node1, node2, graph1, directed = False, create = True):
 
 
 def main(graph): 
+	forum = graph.getStringProperty('forum') # introduced for POREBEL
 	name = graph.getStringProperty("name")
 	postDate = graph.getStringProperty("postDate")
-	uid = graph.getStringProperty("uid")
+	user_id = graph.getStringProperty("user_id")
 	unixDate = graph.getDoubleProperty("unixDate")
 	viewBorderColor = graph.getColorProperty("viewBorderColor")
 	viewBorderWidth = graph.getDoubleProperty("viewBorderWidth")
@@ -81,7 +82,9 @@ def main(graph):
 		If the main has no subgraphs, create one, and rename the root. 
 		'''
 		# initialize properties I need
-		cooc = graph.getIntegerProperty('co-occurrences')
+		cooc = graph.getIntegerProperty('co-occurrences') # stores k(e)
+		connectors = graph.getStringVectorProperty('connectors') # stores the list of people making the association. Its length is kn(e)
+		uc = graph.getIntegerProperty('num_connectors') 
 		gs = []
 		for g in graph.getSubGraphs():
 		    gs.append(g)
@@ -91,33 +94,65 @@ def main(graph):
 		    graph.addCloneSubGraph(gname)
 
 		for g in graph.getSubGraphs():
-			# clone the parallel edges graph onto a new subgrah
+			# clone the parallel edges graph onto a new subgraph
 			nonStacked = g.addCloneSubGraph('nonStacked')
 							
 			# create a stacked subgraph 
 			stacked = g.addSubGraph('stacked')	
 			
-			# add all nodes in nonStacked to stacked
+#			# add all nodes in nonStacked to stacked
 			for n in nonStacked.getNodes():	
 				stacked.addNode(n)
-				
-			# you go over all edges in graph1 and add only one edge to graph2
+#				
+			# go over all edges in graph1 and add only one edge to graph2
 			# also collect the data you are interested in
 			for edge in nonStacked.getEdges():
 				source = nonStacked.source(edge)
 				target = nonStacked.target(edge)
-				color = viewColor[edge]
+				edgeColor = viewColor[edge]
 				# source and target are nodes connect
-				subEdge = findEdge(source, target, stacked, False, True)
+				subEdge = findEdge(source, target, stacked, False, False)
 				if subEdge == None: # the stacked does not contain any edge between source and target
-					subEdge = stacked.addEdge(source, target)
-					cooc[subEdge] = 1
-					viewColor[subEdge] = color
+					subEdge = stacked.addEdge(source,target) #create one, then populate its properties
+					success = stacked.setEdgePropertiesValues(subEdge, {'viewColor': edgeColor, 'co-occurrences': 1, 'connectors': [user_id[edge]]})
+					#cooc[subEdge] = 1
+					#uc[subEdge] = user_id[edge]
 				else:
 					cooc[subEdge] += 1
-					viewColor[subEdge] = color
-				
+					connectorsList = graph.getEdgePropertiesValues(subEdge)['connectors']
+					if user_id[edge] not in connectorsList:
+						connectorsList.append(user_id[edge])
+						update = graph.setEdgePropertiesValues(subEdge, {'connectors': connectorsList})
+			# last move: iterate over edges of the stacked and compute the kn(e) property
+			for subEdge in stacked.getEdges():
+				uc[subEdge] = len(connectors[subEdge])
+		return None
 
+	cn = graph.setName('ethno-poprebel')
+	whole = graph.addCloneSubGraph('all fora')	
+	pl = graph.addSubGraph('pl')
+	eu = graph.addSubGraph('eu')
+	cz = graph.addSubGraph('cz')
+	misc = graph.addSubGraph('other')
 	
+	for e in graph.getEdges():
+		source = graph.source(e)
+		target = graph.target(e)
+		if forum[e] == 'Polish':
+			success = pl.addNode(source)
+			success = pl.addNode(target)
+			newEdge = pl.addEdge(e)
+		elif forum[e] == 'International':
+			success = eu.addNode(source)
+			success = eu.addNode(target)
+			newEdge = eu.addEdge(e)
+		elif forum[e] == 'Czech':
+			success = cz.addNode(source)
+			success = cz.addNode(target)	
+			newEdge = cz.addEdge(e)
+		else:
+			success = misc.addNode(source)
+			success = misc.addNode(target)
+			newEdge = misc.addEdge(e)
 	success = stackAll()
-	# hello world
+    

@@ -112,7 +112,6 @@ def main(graph):
         # each key in theMap has a list of codes (nodes) as a value. Each list is a clique.
         for post in theMap:
             clique = theMap[post]
-            print(post, clique) 
             post_author = authorMap[post]
             for i in range (len(clique)):
                 for j in range(i+1, len(clique)):
@@ -128,7 +127,7 @@ def main(graph):
         running_time = end_script - start_script
         print ('Executed in ' + str(running_time))
         return None
-    tags = ['ethno-opencare', 'ethno-poprebel', 'ethno-ngi-forward']
+    tags = ['ethno-poprebel']
     # tags = ['ethno-test']
     for tag in tags:
         success = make_ccn_from_tag(tag)

@@ -1,12 +1,27 @@
-# run from the root graph
+# Creates a subgraph with the stacked edges in each category. 
+# This is the graph to visualize.
+# Run from the root
 
 from tulip import tlp
 
+# The updateVisualization(centerViews = True) function can be called
+# during script execution to update the opened views
+
+# The pauseScript() function can be called to pause the script execution.
+# To resume the script execution, you will have to click on the "Run script " button.
+
+# The runGraphScript(scriptFile, graph) function can be called to launch
+# another edited script on a tlp.Graph object.
+# The scriptFile parameter defines the script name to call (in the form [a-zA-Z0-9_]+.py)
+
+# The main(graph) function must be defined 
+# to run the script on the current graph
 
 def main(graph): 
-  viewFontAwesomeIcon = graph.getStringProperty("viewFontAwesomeIcon")
+  viewFontAwesomeIcon = graph.getStringProperty("viewFontAwesomeIcon")  
   category_id = graph.getIntegerProperty("category_id")
-  numComms = graph.getIntegerProperty("numComms")
+  # post_id = graph.getIntegerProperty("post_id")
+  # user_id = graph.getIntegerProperty("user_id")
   user_name = graph.getStringProperty("user_name")
   viewBorderColor = graph.getColorProperty("viewBorderColor")
   viewBorderWidth = graph.getDoubleProperty("viewBorderWidth")
@@ -31,41 +46,20 @@ def main(graph):
   viewTgtAnchorShape = graph.getIntegerProperty("viewTgtAnchorShape")
   viewTgtAnchorSize = graph.getSizeProperty("viewTgtAnchorSize")
   wordCount = graph.getDoubleProperty("wordCount")
-
-  allCats = graph.getSubGraph('all Cats Stacked')
-  catGraphs = []
-  for g in graph.getSubGraphs():
-    if g != allCats:
-      catGraphs.append(g)
-
-  blue = tlp.Color(102,204,255, 255)  
-  red = tlp.Color(204,51, 0, 255)
-  green = tlp.Color(51,255,204, 255)
-  orange = tlp.Color(255, 153, 0, 255)
-  steel = tlp.Color(160,160,160, 255) ## steel I keep for nodes that participate in more than one conversation
-  colors = [blue, red, green, orange, steel] # need to add more colors
-  for i in range(len(catGraphs)):
-    for e in catGraphs[i].getEdges():
-      viewColor[e] = colors[i]
-  for n in graph.getNodes():
-    viewColor[n] = steel # reset the color of nodes in case I have to run the script multiple times
-  nodesFound = [] # accumulator for the nodes already processed
-  for i in range(len(catGraphs)):
-    counter = 0
-    for n in catGraphs[i].getSubGraph('stacked').getNodes():
-      if n not in nodesFound:
-        viewColor[n] = colors[i]
-        counter +=1
-        nodesFound.append(n)
-      else:
-        viewColor[n] = steel
-
-  # now count nodes by color:    
-
-  for color in colors:
-    counter = 0
-    for n in graph.getNodes():
-      if viewColor[n] == color:
-        counter +=1
-    print (str(color) + ': ' + str(counter))
   
+  graphNames = []
+  for sg in graph.getSubGraphs():
+    graphNames.append(sg.getName())
+  print graphNames  
+    
+  aCS = graph.addSubGraph('all Cats Stacked')
+  
+  for name in graphNames:
+    g = graph.getSubGraph(name).getSubGraph('stacked')
+    for n in g.getNodes():
+      aCS.addNode(n)
+    for e in g.getEdges():
+      aCS.addEdge(e)
+    
+
+

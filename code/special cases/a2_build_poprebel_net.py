@@ -65,6 +65,14 @@ def main(graph):
         all relevant information about codes are saved as node properties
         all relevant information about annotations are saved as edge properties.
         '''
+        # I need a map from post ID to the author_ID of the posts being annotated
+        authorMap = {}
+        tops = api.fetch_topics_from_tag(tag)
+        for top in tops:
+            posts = api.fetch_posts_in_topic(top) 
+            for post in posts: 
+                authorMap[post['post_id']] = post['user_id']
+
         # change the name of the main graph 
         graph.setName(tag)
         myAnnos = api.fetch_annos(tag)
@@ -85,6 +93,7 @@ def main(graph):
         ancestry = graph.getStringProperty('ancestry')
         parent_code = graph.getStringProperty('parent_code')
         annotations_count = graph.getIntegerProperty('annotations_count')
+        user_id = graph.getStringProperty('user_id')
         forum = graph.getStringProperty('forum') # introduced for POREBEL
         for locale in locales:
             # I need to derive the property names from the data, and then assign them to properties 
@@ -130,6 +139,7 @@ def main(graph):
         # each key in theMap has a list of codes (nodes) as a value. Each list is a clique.
         for post in theMap:
             clique = theMap[post]['codes']
+            post_author = authorMap[post]
             for i in range (len(clique)):
                 for j in range(i+1, len(clique)):
                     for n1 in graph['code_id'].getNodesEqualTo(str(clique[i])):
@@ -137,7 +147,7 @@ def main(graph):
                     for n2 in graph['code_id'].getNodesEqualTo(str(clique[j])):
                         target = n2
                     e = graph.addEdge(source, target)
-                    graph.setEdgePropertiesValues(e, {'post_id': str(post), 'forum': theMap[post]['forum']})
+                    graph.setEdgePropertiesValues(e, {'post_id': str(post), 'forum': theMap[post]['forum'], 'user_id': str(post_author)})
         print ('*** Edges added ***')
         
         end_script = datetime.datetime.now()
