@@ -108,6 +108,7 @@ def main(graph):
 			for edge in nonStacked.getEdges():
 				source = nonStacked.source(edge)
 				target = nonStacked.target(edge)
+				edgeColor = viewColor[edge]
 				# source and target are nodes connect
 				subEdge = findEdge(source, target, stacked, False, False)
 				if subEdge == None: # the stacked does not contain any edge between source and target

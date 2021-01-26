@@ -49,7 +49,7 @@ def main(graph):
         (None)=> graph
         the returned subgraph has to be a tree
         '''
-        parent_code = graph.getStringProperty('parent_code')
+        parent_code = graph['parent_code'] # define the property
         ch = graph.addSubGraph('codes hierarchy')
         # create the root node
         projectName = graph.getName()
@@ -59,14 +59,10 @@ def main(graph):
             newNode = ch.addNode(n)
         # add ancestry edges
         for n in graph.getNodes():
-            if parent_code[n] == 'None':
-                a = 1
-#                e = ch.addEdge(root, n)
-            else: 
-               parent = parent_code[n]
-               for p in graph['code_id'].getNodesEqualTo(parent):
-                   e = ch.addEdge(p, n)            
-
+            if ancestry[n] != 'None':
+                parent_code[n] = ancestry[n].split('/')[-1]
+                for p in graph['code_id'].getNodesEqualTo(parent_code[n]):
+                    e = ch.addEdge(p, n)            
         return ch    
         
     success = create_ancestry_graph()
