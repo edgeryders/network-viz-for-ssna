@@ -107,6 +107,7 @@ def main(graph):
                     edgebox[incident] = [e]
                 else:
                     edgebox[incident].append(e)
+
         annotations_count[mn] = anns
         if len(colors) == 1:
             viewColor[mn] = colors[0]

@@ -176,9 +176,14 @@ def fetch_public_tops_with_subcat_from_cat(cat, theMap = {}):
     while len(topicList) > 0:
         call = baseUrl + 'c/' + slug + '.json?page=' + str(i)
         print ('Reading posts: page ' + str(i))
-        time.sleep(.2)
+        time.sleep(.5)
         response = requests.get(call)
-        catTopics = response.json()
+        try:
+            catTopics = response.json()
+        except Exception as e: 
+            print(e)
+            print(call)
+            continue
         topicList = catTopics['topic_list']['topics']
         for topic in topicList:
             top = []
@@ -236,7 +241,12 @@ def fetch_posts_in_topic(id):
     while len(postList) > 0:
       time.sleep(0.05)
       call = baseUrl + 't/' + str(id) + '.json?page=' + str(pageCounter) + '&include_raw=1' # the field "raw" is handy for word count, but not included by default.
-      topic = responses.get(call).json()
+      try:
+          topic = responses.get(call).json()
+      except Exception as e:
+          print(e)
+          print (call)
+          continue
       if 'post_stream' in topic:
           postList = topic['post_stream']['posts']
           print ('Reading ' + str(len(postList)) + ' posts from topic ' + str(id))
@@ -369,14 +379,17 @@ def count_views_in_tag(tag):
     Counts the number of views in a category
     '''
     counter = 0
+    missing = []
     tops = fetch_topics_from_tag(tag) # this returns the topics IDs
     for top in tops:
-        if API_key != '':
-            call = baseUrl + 't/' + str(top) + '.json?api_key=' + API_key
-        else:
-            call = baseUrl + 't/' + str(top) + '.json'         
-        response = requests.get(call).json()
+      call = baseUrl + 't/' + str(top) + '.json'
+      response = responses.get(call).json()
+      if 'views' in response:
         counter += response['views']
+      else:
+        missing.append(top)
+    print ('Missing topics: ' + str(missing))
+    print(len(missing))
     return counter
     
 def fetch_annos(tag = ''):
@@ -545,38 +558,43 @@ def make_gource_file_from_cat(cat, theMap = {}):
     tops = fetch_public_tops_with_subcat_from_cat(cat, theMap) # get the topics to go into the Gource viz
     gourceList = []
     for top in tops:
-        # first, the part of the slug common to all posts in the same topic
+        # first, the part of the slug common to all posts in the same topic. 
         catInfo = find_cat_info(top[1], theMap)
         catSlug = catInfo['slug']
         catColor = catInfo['color']
         topSlug = catSlug + '/' + str(top[0])
         # now add the part of the slug that describes in-category threading
         posts = fetch_posts_in_topic(top[0]) #!! this function assigns value 1 to posts that have value 
-        # Null to reply_to_post_id 
+        # Null to reply_to_post_id
+        '''
+        for each post in the topic, generate a slug that keeps track of the post's threading within the 
+        topic, with the parent post's number to the left of the child post's. 1 is omitted For example
+        {1: '', 2: '/2', 3: '/3', 4: '/3/4', 5: '/3/4/5'} and so on. 
+        The rightmost number is always the post number in the topic.
+        The very end of the slug is the post's first words: 1/2/3/Lorem ipsum dolor ...
+        ''' 
         ancestry = {} # I need a map to track which post is child to which. The map is specific to each topic
+        for post in posts:
+            post_number = post['post_number']
+            parent = post['reply_to_post_number']
+            ancestry[post_number] = parent
+            
         for post in posts:
             s = post['created_at']
             timestamp = str(int(datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%s")))
             author = post['username']
-            '''
-            for each post in the topic, generate a slug that keeps track of the post's threading within the 
-            topic, with the parent post's number to the left of the child post's. 1 is omitted For example
-            {1: '', 2: '/2', 3: '/3', 4: '/3/4', 5: '/3/4/5'} and so on. 
-            The rightmost number is always the post number in the topic.
-            '''
-            post_number = post['post_number']
-            parent = post ['reply_to_post_number']
+            post_number = post['post_number'] # I have to do this again, because the ancestry map must be complete before comutping the slug
+            parent = post['reply_to_post_number']            
             post_text = textwrap.shorten(post['raw'], 30, placeholder="...")
+            post_text = post_text.replace(',', '') # get rid of the commas, which act as separators in CSV
             if post_number == 1 :
                 slug = '/' + post_text
             elif post_number > 1 and parent == 1:
-                ancestry[post_number] = 1
                 slug = '/1/' + post_text 
-            elif post_number == parent:
+            elif post_number == parent: # happens for some weird legacy data, don't worry too much
                 continue
             else: 
                 sluglist = []
-                ancestry[post_number] = parent
                 while parent > 1:
                     sluglist.append(str(parent))
                     if parent in ancestry:
@@ -587,39 +605,36 @@ def make_gource_file_from_cat(cat, theMap = {}):
                 for i in reversed(sluglist):
                     slug = slug + '/' + i 
                 slug = slug + '/' + post_text
-            gourceList.append(timestamp + '|' + author + '|A|' + topSlug + '/' + slug + '|' + str(catColor))
-            if post['reply_count'] > 0: # the post does have children, take care of the post-as-directory
-                if post_number == 1:
-                    slug = '/1'
-                elif post_number > 1 and parent == 1:
-                    slug = '/1/' + str(post_number) 
-                elif post_number == parent:
-                    continue
-                else: 
-                    sluglist = []
-                    ancestry[post_number] = parent
-                    while parent > 1:
-                        sluglist.append(str(parent))
-                        if parent in ancestry:
-                            parent = ancestry[parent]
-                        else: # example, hidden reply, like post 22 in https://edgeryders.eu/t/open-source-coffee-sorter-project/7122
-                            parent = 1 # breaks the while loop
-                    slug = ''
-                    for i in reversed(sluglist):
-                        slug = slug + '/' + str(i) 
-                    slug = slug + '/' + str(post_number)
-                timestamp1 = str(int(timestamp) - 1) # this prevents the two entities representing the post appearing at exactly the same time in the log
-                gourceList.append(timestamp1 + '|' + author + '|A|' + topSlug + slug + '|' + str(catColor))
+            gourceList.append(timestamp + '|' + author + '|A|' + topSlug + slug + '|' + str(catColor))
+##            if post['reply_count'] > 0: # the post does have children, take care of the post-as-directory
+##                if post_number == 1:
+##                    slug = '/1'
+##                elif post_number > 1 and parent == 1:
+##                    slug = '/1/' + str(post_number) 
+##                elif post_number == parent:
+##                    continue
+##                else: 
+##                    sluglist = []
+##                    ancestry[post_number] = parent
+##                    while parent > 1:
+##                        sluglist.append(str(parent))
+##                        if parent in ancestry:
+##                            parent = ancestry[parent]
+##                        else: # example, hidden reply, like post 22 in https://edgeryders.eu/t/open-source-coffee-sorter-project/7122
+##                            parent = 1 # breaks the while loop
+##                    slug = ''
+##                    for i in reversed(sluglist):
+##                        slug = slug + '/' + str(i) 
+##                    slug = slug + '/' + str(post_number)
+##                timestamp1 = str(int(timestamp) - 1) # this prevents the two entities representing the post appearing at exactly the same time in the log
+##                gourceList.append(timestamp1 + '|' + author + '|A|' + topSlug + slug + '|' + str(catColor))
 
-    if catName == '':
-        outFileName = 'gourcefile_' + str(cat) + '.csv'
-    else: 
-        outFileName = 'gourcefile_' + str(cat) + '.csv'
-        
+
+    outFileName = 'gourcefile_' + str(cat) + '.csv'
     with open (cng.dirPath + outFileName, 'w', encoding='utf-8-sig') as gourcefile:
         for item in sorted(gourceList):
             gourcefile.write(item + ',\n')
-        print (outFileName + '.csv saved at ' + cng.dirPath)
+        print (outFileName + ' saved at ' + cng.dirPath)
     return sorted(gourceList)
     
     
@@ -785,10 +800,8 @@ if __name__ == '__main__':
     print (greetings)
     # testing a function
     # success = make_gource_file_from_tag('ethno-opencare', ethno=True)
-    mya= fetch_annos('ethno-test')
-    success = fetch_codes_from_annos(mya)
-    print(success[0])
-    print(mya[0])
-    
-
-        
+    mymap = make_categories_map()
+    print (mymap)
+    theList = []
+    for item in mymap:
+      theList.append(make_gource_file_from_cat(mymap[item]['slug'] ,mymap))

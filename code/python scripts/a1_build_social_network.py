@@ -235,7 +235,6 @@ def main(graph):
           message2 = 'Contributions: ' + str(numContributions) + ' in ' + str(numTopics) + ' topics, with ' + str(words/1000) + 'K words'
           print (message2)
           api.save_string(message2, logfile)
-          print 'Adding nodes...'
           end_script = datetime.datetime.now()
           running_time = end_script - start_script
           message3 = ('Executed in ' + str(running_time))
@@ -246,6 +245,6 @@ def main(graph):
 #  cats = ['earthos/sci-fi-economics']
 #  build_graph_from_cats(cats) 
 #    
-  listOfTags = ['ethno-poprebel', 'ethno-ngi-forward'] # replace this list with the list of categories you want 
+  listOfTags = ['ethno-ngi-forward'] # replace this list with the list of categories you want 
   build_graph_from_tags(listOfTags)
 
