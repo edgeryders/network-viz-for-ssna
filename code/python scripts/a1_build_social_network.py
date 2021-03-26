@@ -245,6 +245,6 @@ def main(graph):
 #  cats = ['earthos/sci-fi-economics']
 #  build_graph_from_cats(cats) 
 #    
-  listOfTags = ['ethno-ngi-forward', 'ethno-poprebel'] # replace this list with the list of categories you want 
+  listOfTags = ['ethno-ngi-forward'] # replace this list with the list of categories you want 
   build_graph_from_tags(listOfTags)
 

@@ -33,7 +33,8 @@ def main(graph):
     viewTgtAnchorShape = graph['viewTgtAnchorShape']
     viewTgtAnchorSize = graph['viewTgtAnchorSize']
     
-    stacked = graph.getSubGraph('all Cats Stacked')
+    af = graph.getSubGraph('all fora')
+    stacked = af.getSubGraph('stacked')
     # determine the maximum value of k
     kmax = 0
     for e in stacked.getEdges():
