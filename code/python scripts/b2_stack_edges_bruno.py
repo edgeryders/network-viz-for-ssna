@@ -23,33 +23,21 @@ def findEdge(node1, node2, graph1, directed = False, create = True):
    if not returns a newly created edge unless stated otherwise
    deals with either directed or undirected graphs
    '''
-	e = graph1.existEdge(node1, node2)
+	e = graph1.existEdge(node1, node2, directed)
 	if e.isValid():
 		return e
 	else:
-		if not directed:
-			e = graph1.existEdge(node2, node1)
-			if e.isValid():
-				return e
-			else:
-				if create:
-					e = graph1.addEdge(node1, node2)
-					return e 
-				else:
-					return None                       
-		else:
-			if create:    
+		if create:
 				e = graph1.addEdge(node1, node2)
-				return e
-			else:
-				return None
+				return e 
+		else:
+			return None
 
 
 def main(graph): 
 	name = graph.getStringProperty("name")
 	postDate = graph.getStringProperty("postDate")
 	user_id = graph.getStringProperty("user_id")
-	topic_id = graph.getStringProperty('topic_id')
 	unixDate = graph.getDoubleProperty("unixDate")
 	viewBorderColor = graph.getColorProperty("viewBorderColor")
 	viewBorderWidth = graph.getDoubleProperty("viewBorderWidth")
@@ -89,8 +77,6 @@ def main(graph):
 		cooc = graph.getIntegerProperty('co-occurrences') # stores k(e), the number of posts coded with both the codes incident to this edge
 		connectors = graph.getStringVectorProperty('connectors') # stores the list of people making the association. Its length is kn(e)
 		uc = graph.getIntegerProperty('num_connectors') # stores the number of people making the connection.
-		topics = graph.getStringVectorProperty('topics') # stores the list of topics on which the co-occurrence appears
-		numtops = graph.getIntegerProperty('number_topics') # stores the number of topics
 		gs = []
 		for g in graph.getSubGraphs():
 		    gs.append(g)
@@ -120,25 +106,24 @@ def main(graph):
 				subEdge = findEdge(source, target, stacked, False, False)
 				if subEdge == None: # the stacked does not contain any edge between source and target
 					subEdge = stacked.addEdge(source, target)
-					initialize_edge = stacked.setEdgePropertiesValues(subEdge, {'viewColor': edgeColor, 'connectors': [user_id[edge]], 'posts': [post_id[edge]], 'topics': [topic_id[edge]]})
+					stacked.setEdgePropertiesValues(subEdge, {'viewColor': edgeColor, 'connectors': [user_id[edge]], 'posts': [post_id[edge]]})
+					
 				else:
-					postsList = stacked.getEdgePropertiesValues(subEdge)['posts']
-					postsList.append(post_id[edge])
-					update = stacked.setEdgePropertiesValues(subEdge, {'posts': postsList})
+					#postsList = graph.getEdgePropertiesValues(subEdge)['posts']
+					postsList = posts[subEdge]
+					postsList.append(post_id[edge])				
+					#update = graph.setEdgePropertiesValues(subEdge, {'posts': postsList})
+					posts[subEdge]=postsList
 					cooc[subEdge] += 1
-					connectorsList = connectors[subEdge] # Bruno's version! graph.getEdgePropertiesValues(subEdge)['connectors']
-					topicsList = topics[subEdge]
+					#connectorsList = graph.getEdgePropertiesValues(subEdge)['connectors']
+					connectorsList = connectors[subEdge]
 					if user_id[edge] not in connectorsList:
 						connectorsList.append(user_id[edge])
-						update = stacked.setEdgePropertiesValues(subEdge, {'connectors': connectorsList})
-					if topic_id[edge] not in topicsList:
-						topicsList.append(topic_id[edge])
-						update = stacked.setEdgePropertiesValues(subEdge, {'topics': topicsList})
-			# last move: iterate over edges of the stacked and compute the numeric properties
-			for subEdge in stacked.getEdges():
-				uc[subEdge] = len(connectors[subEdge])
-				cooc[subEdge] = len(posts[subEdge])
-				numtops[subEdge] = len(topics[subEdge])
+						update = graph.setEdgePropertiesValues(subEdge, {'connectors': connectorsList})
+			# last move: iterate over edges of the stacked and compute the kp(e) property
+			for Ed in stacked.getEdges():
+				uc[Ed] = len(connectors[Ed])
+				cooc[Ed] = len(posts[Ed])
 
 	success = stackAll()
     

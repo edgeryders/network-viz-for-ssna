@@ -214,7 +214,7 @@ def fetch_topics_from_tag(tag):
     while len(topicList) > 0:
         call = baseUrl + 'tags/' + str(tag) + '.json?page=' + str(i)
         print ('Reading topics: page ' + str(i))
-        time.sleep(.2)
+        time.sleep(.5)
         response = responses.get(call)
         tagTopics = response.json()
         topicList = tagTopics['topic_list']['topics']
@@ -800,8 +800,4 @@ if __name__ == '__main__':
     print (greetings)
     # testing a function
     # success = make_gource_file_from_tag('ethno-opencare', ethno=True)
-    mymap = make_categories_map()
-    print (mymap)
-    theList = []
-    for item in mymap:
-      theList.append(make_gource_file_from_cat(mymap[item]['slug'] ,mymap))
+    success = fetch_annos('ethno-ngi-forward')

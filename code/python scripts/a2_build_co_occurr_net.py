@@ -51,12 +51,15 @@ def main(graph):
         all relevant information about annotations are saved as edge properties.
         '''
         # I need a map from post ID to the author_ID of the posts being annotated
+        # also need one fro post ID to the topic ID to track thjat measure of diversity
         authorMap = {}
+        topicMap = {}
         tops = api.fetch_topics_from_tag(tag)
         for top in tops:
             posts = api.fetch_posts_in_topic(top) 
             for post in posts: 
                 authorMap[post['post_id']] = post['user_id']
+                topicMap[post['post_id']] = post['topic_id']
         # create a subgraph corresponding to the project
         proj = graph.addSubGraph(tag) 
         myAnnos = api.fetch_annos(tag)
@@ -78,6 +81,7 @@ def main(graph):
         parent_code = graph.getStringProperty('parent_code')
         annotations_count = graph.getIntegerProperty('annotations_count')
         user_id = graph.getStringProperty('user_id')
+        topic_id = graph.getStringProperty('topic_id')
         for locale in locales:
             # I need to derive the property names from the data, and then assign them to properties 
             # See https://stackoverflow.com/questions/8530694/use-iterator-as-variable-name-in-python-loop
@@ -100,6 +104,7 @@ def main(graph):
              
         theMap = {} # maps from posts to codes. Need it to create edges.
         # also adding the posts' author for "one man one vote" network reduction
+        # and also the topic_id for diversity indices computation
         for anno in myAnnos:
             code_id = anno['code_id']
             post_id = anno['post_id']
@@ -113,6 +118,7 @@ def main(graph):
         for post in theMap:
             clique = theMap[post]
             post_author = authorMap[post]
+            post_topic = topicMap[post]
             for i in range (len(clique)):
                 for j in range(i+1, len(clique)):
                     for n1 in proj['code_id'].getNodesEqualTo(str(clique[i])):
@@ -120,14 +126,14 @@ def main(graph):
                     for n2 in proj['code_id'].getNodesEqualTo(str(clique[j])):
                         target = n2
                     e = proj.addEdge(source, target)
-                    proj.setEdgePropertiesValues(e, {'post_id': str(post), 'user_id': str(post_author)})
+                    proj.setEdgePropertiesValues(e, {'post_id': str(post), 'user_id': str(post_author), 'topic_id': str(post_topic)})
         print ('*** Edges added ***')
         
         end_script = datetime.datetime.now()
         running_time = end_script - start_script
         print ('Executed in ' + str(running_time))
         return None
-    tags = ['ethno-ngi-forward']
-    # tags = ['ethno-test']
+    tags = ['ethno-ngi-forward', 'ethno-poprebel', 'ethno-opencare']
+    # tags = ['ethno-test-alberto']
     for tag in tags:
         success = make_ccn_from_tag(tag)
