@@ -33,7 +33,9 @@ def main(graph):
     viewTgtAnchorShape = graph['viewTgtAnchorShape']
     viewTgtAnchorSize = graph['viewTgtAnchorSize']
     
-    # af = graph.getSubGraph('all fora')
+
+    # af = graph.getSubGraph('all fora') only use this part when looking at POPREBEL data with multiple fora
+    # stacked = af.getSubGraph('stacked')
     stacked = graph.getSubGraph('stacked')
     # determine the maximum value of k
     kmax = 0
