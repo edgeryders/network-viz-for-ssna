@@ -141,5 +141,5 @@ def main(graph):
  
         return csg
         
-    success = make_metanode('inequality 6')
+    success = make_metanode('regulation')
   
