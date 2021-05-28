@@ -125,15 +125,16 @@ def main(graph):
                         source = n1
                     for n2 in proj['code_id'].getNodesEqualTo(str(clique[j])):
                         target = n2
-                    e = proj.addEdge(source, target)
-                    proj.setEdgePropertiesValues(e, {'post_id': str(post), 'user_id': str(post_author), 'topic_id': str(post_topic)})
+                    if n1 != n2: # self-loops do not make sense in a semantic network
+                        e = proj.addEdge(source, target)
+                        proj.setEdgePropertiesValues(e, {'post_id': str(post), 'user_id': str(post_author), 'topic_id': str(post_topic)})
         print ('*** Edges added ***')
         
         end_script = datetime.datetime.now()
         running_time = end_script - start_script
         print ('Executed in ' + str(running_time))
         return None
-    tags = ['ethno-ngi-forward', 'ethno-poprebel', 'ethno-opencare']
-    # tags = ['ethno-test-alberto']
+    # tags = ['ethno-ngi-forward', 'ethno-poprebel', 'ethno-opencare']
+    tags = ['ethno-opencare']
     for tag in tags:
         success = make_ccn_from_tag(tag)
