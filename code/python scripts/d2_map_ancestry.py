@@ -44,16 +44,19 @@ def main(graph):
     viewTgtAnchorShape = graph['viewTgtAnchorShape']
     viewTgtAnchorSize = graph['viewTgtAnchorSize']
 
-    def create_ancestry_graph():
+    def create_ancestry_graph(rootNode = True):
         '''
-        (None)=> graph
+        (bool)=> graph
+        creates a subgraph of the code hierarchy. If rootNode == True, the root node is also included.
+        It is best to put root == False for heavily multilayered hierarchies.
         the returned subgraph has to be a tree
         '''
         parent_code = graph['parent_code'] # define the property
         ch = graph.addSubGraph('codes hierarchy')
         # create the root node
         projectName = graph.getName()
-#        root = ch.addNode({'name_en': projectName, 'ancestry': 'root'})
+        if rootNode == True:
+            root = ch.addNode({'name_en': projectName, 'ancestry': 'root'})
 #        # add all the other nodes. 
         for n in graph.getNodes():
             newNode = ch.addNode(n)
@@ -62,7 +65,10 @@ def main(graph):
             if ancestry[n] != 'None':
                 parent_code[n] = ancestry[n].split('/')[-1]
                 for p in graph['code_id'].getNodesEqualTo(parent_code[n]):
-                    e = ch.addEdge(p, n)            
+                    e = ch.addEdge(p, n)      
+            else:
+                if rootNode == True:
+                    e = ch.addEdge(root, n)      
         return ch    
         
-    success = create_ancestry_graph()
+    success = create_ancestry_graph(False)

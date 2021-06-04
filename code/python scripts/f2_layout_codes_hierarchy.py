@@ -69,8 +69,6 @@ def main(graph):
         (None) => None
         layout on the codes hierarchy
         '''
-        params = tlp.getDefaultPluginParameters('Balloon (OGDF)', graph)
-        graph.applyLayoutAlgorithm('Balloon (OGDF)', params)
         
         # apply size mapping
         params = tlp.getDefaultPluginParameters("Size Mapping", graph)
@@ -88,6 +86,10 @@ def main(graph):
         params['target'] = 'nodes'
         params['color scale'] = colorScale
         graph.applyColorAlgorithm('Color Mapping', params)
+        
+        # layout
+        params = tlp.getDefaultPluginParameters('Balloon (OGDF)', graph)
+        graph.applyLayoutAlgorithm('Balloon (OGDF)', params)
         
     success = prettify_codes_hierarchy()
 
