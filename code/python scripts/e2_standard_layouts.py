@@ -27,7 +27,8 @@ from tulip import tlp
 def main(graph):
     ancestry = graph['ancestry']
     annotations_count = graph['annotations_count']
-    cooccurrences = graph['co-occurrences']
+    association_depth = graph['association_depth']
+    association_breadth = graph['association_breadth']
     code_id = graph['code_id']
     creator_id = graph['creator_id']
     description = graph['description']
@@ -102,7 +103,7 @@ def main(graph):
             colors = [tlp.Color.Gray, tlp.Color.Red]
             colorScale = tlp.ColorScale(colors)
             params = tlp.getDefaultPluginParameters("Color Mapping", graph)
-            params['input property'] = cooccurrences
+            params['input property'] = association_depth
             params['type'] = 'logarithmic'
             params['target'] = 'edges'
             params['color scale'] = colorScale
@@ -112,4 +113,4 @@ def main(graph):
             params['target'] = 'nodes'
             graph.applyColorAlgorithm('Color Mapping', params)
             
-    success = prettify_cooc_graph(graph, False)
+    success = prettify_cooc_graph(graph, True)

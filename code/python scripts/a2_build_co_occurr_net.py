@@ -134,7 +134,7 @@ def main(graph):
         running_time = end_script - start_script
         print ('Executed in ' + str(running_time))
         return None
-    tags = ['ethno-test-alberto']
-    # tags = ['ethno-opencare']
+    # tags = ['ethno-test-alberto']
+    tags = ['ethno-poprebel', 'ethno-ngi-forward', 'ethno-opencare']
     for tag in tags:
         success = make_ccn_from_tag(tag)

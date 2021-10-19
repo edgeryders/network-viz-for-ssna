@@ -103,13 +103,13 @@ def main(graph):
                     specialUsers[author] += 1
                   if author not in involved:
                       involved[author] ={'username': author, 'user_id': post['user_id']}
-          print str(len(involved)) + ' unique participants in the added convo'
+          print (str(len(involved)) + ' unique participants in the added convo')
               
           extant_nodes = {} # build a map of already existing nodes, to keep track of who is who
           for n in graph.getNodes():
             name = user_name.getNodeStringValue(n)
             extant_nodes[name] = n
-          print str(len(extant_nodes)) + ' nodes in the map'
+          print (str(len(extant_nodes)) + ' nodes in the map')
     
           # build the network. Add nodes first 
           # if the node already exists, it is added only to the subgraph 
@@ -126,11 +126,11 @@ def main(graph):
               graph.setNodePropertiesValues(n, {'user_name': involved[person]['username'], 'user_id':involved[person]['user_id'] })
               nodeMap[person] = n
               counter2 += 1
-          print str(counter1) + ' nodes added from map'
-          print str(counter2) + ' nodes added ex novo'
+          print (str(counter1) + ' nodes added from map')
+          print (str(counter2) + ' nodes added ex novo')
           # for edges, iterate on allPosts. Within each topic, each post is either a response the post stored in the 'reply_to_user' field.
           # if reply_to_post_number = null, the post is considered a reply to the first post in the topic.
-          print 'Adding edges...'
+          print ('Adding edges...')
           for topic in allPosts:
             threadPosts = allPosts[topic]
             for post in threadPosts: # this is a list, corresponding to 'posts-stream'
@@ -149,7 +149,7 @@ def main(graph):
           message2 = 'Contributions: ' + str(numContributions) + ' in ' + str(numTopics) + ' topics, with ' + str(words/1000) + 'K words'
           print (message2)
           api.save_string(message2, logfile)
-          print 'Adding nodes...'
+          print ('Adding nodes...')
           end_script = datetime.datetime.now()
           running_time = end_script - start_script
           message3 = ('Executed in ' + str(running_time))
@@ -189,13 +189,13 @@ def main(graph):
                     specialUsers[author] += 1
                   if author not in involved:
                       involved[author] ={'username': author, 'user_id': post['user_id']}
-          print str(len(involved)) + ' unique participants in the added convo'
+          print (str(len(involved)) + ' unique participants in the added convo')
               
           extant_nodes = {} # build a map of already existing nodes, to keep track of who is who
           for n in graph.getNodes():
             name = user_name.getNodeStringValue(n)
             extant_nodes[name] = n
-          print str(len(extant_nodes)) + ' nodes in the map'
+          print (str(len(extant_nodes)) + ' nodes in the map')
     
           # build the network. Add nodes first 
           # if the node already exists, it is added only to the subgraph 
@@ -212,11 +212,11 @@ def main(graph):
               graph.setNodePropertiesValues(n, {'user_name': involved[person]['username'], 'user_id':involved[person]['user_id'] })
               nodeMap[person] = n
               counter2 += 1
-          print str(counter1) + ' nodes added from map'
-          print str(counter2) + ' nodes added ex novo'
+          print (str(counter1) + ' nodes added from map')
+          print (str(counter2) + ' nodes added ex novo')
           # for edges, iterate on allPosts. Within each topic, each post is either a response the post stored in the 'reply_to_user' field.
           # if reply_to_post_number = null, the post is considered a reply to the first post in the topic.
-          print 'Adding edges...'
+          print ('Adding edges...')
           for topic in allPosts:
             threadPosts = allPosts[topic]
             for post in threadPosts: # this is a list, corresponding to 'posts-stream'
@@ -242,9 +242,9 @@ def main(graph):
           api.save_string(message3 +'\n', logfile)
       return None
       
-#  cats = ['earthos/sci-fi-economics']
-#  build_graph_from_cats(cats) 
-#    
-  listOfTags = ['ethno-ngi-forward'] # replace this list with the list of categories you want 
-  build_graph_from_tags(listOfTags)
+  cats = ['earthos/the-reef']
+  build_graph_from_cats(cats) 
+    
+#  listOfTags = ['ethno-ngi-forward'] # replace this list with the list of categories you want 
+#  build_graph_from_tags(listOfTags)
 

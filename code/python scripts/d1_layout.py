@@ -32,7 +32,6 @@ def main(graph):
 	viewLayout = graph.getLayoutProperty("viewLayout")
 	viewMetric = graph.getDoubleProperty("viewMetric")
 	viewSize = graph.getSizeProperty("viewSize")
-	numComms = graph.getIntegerProperty("numComms")
 	user_name = graph.getStringProperty("user_name")
 	viewBorderColor = graph.getColorProperty("viewBorderColor")
 	viewBorderWidth = graph.getDoubleProperty("viewBorderWidth")

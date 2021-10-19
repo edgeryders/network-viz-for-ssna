@@ -46,7 +46,7 @@ def findEdge(node1, node2, graph1, directed = False, create = True):
 
 
 def main(graph): 
-	name = graph.getStringProperty("name")
+	name = graph.getStringProperty("name_en")
 	postDate = graph.getStringProperty("postDate")
 	user_id = graph.getStringProperty("user_id")
 	topic_id = graph.getStringProperty('topic_id')
@@ -85,10 +85,11 @@ def main(graph):
 		'''
 		# initialize properties I need
 		post_id = graph.getStringProperty('post_id')
-		posts =  graph.getStringVectorProperty('posts') # stores the list of posts coded with both the codes incident to this edge 
-		cooc = graph.getIntegerProperty('co-occurrences') # stores k(e), the number of posts coded with both the codes incident to this edge
+		posts =  graph.getStringVectorProperty('posts') # stores the list of posts coded with both the codes incident to this edge
+		np = graph.getDoubleProperty('unique_posts') # stores the number of posts coded with both the codes incident to this edge
+		cooc = graph.getIntegerProperty('association_depth') # stores k(e), the number of posts coded with both the codes incident to this edge
 		connectors = graph.getStringVectorProperty('connectors') # stores the list of people making the association. Its length is kn(e)
-		uc = graph.getIntegerProperty('num_connectors') # stores the number of people making the connection.
+		uc = graph.getIntegerProperty('association_breadth') # stores the number of people making the connection.
 		topics = graph.getStringVectorProperty('topics') # stores the list of topics on which the co-occurrence appears
 		numtops = graph.getIntegerProperty('number_topics') # stores the number of topics
 		gs = []
@@ -127,18 +128,25 @@ def main(graph):
 					update = stacked.setEdgePropertiesValues(subEdge, {'posts': postsList})
 					cooc[subEdge] += 1
 					connectorsList = connectors[subEdge] # Bruno's version! graph.getEdgePropertiesValues(subEdge)['connectors']
-					topicsList = topics[subEdge]
+					topicsList = topics[subEdge] 
+					postsList = posts[subEdge]
 					if user_id[edge] not in connectorsList:
 						connectorsList.append(user_id[edge])
 						update = stacked.setEdgePropertiesValues(subEdge, {'connectors': connectorsList})
 					if topic_id[edge] not in topicsList:
 						topicsList.append(topic_id[edge])
 						update = stacked.setEdgePropertiesValues(subEdge, {'topics': topicsList})
+
 			# last move: iterate over edges of the stacked and compute the numeric properties
 			for subEdge in stacked.getEdges():
 				uc[subEdge] = len(connectors[subEdge])
-				cooc[subEdge] = len(posts[subEdge])
+				cooc[subEdge] = len(posts[subEdge]) # define a function to compute num_posts based on posts_list
 				numtops[subEdge] = len(topics[subEdge])
+				posts_seen = [] # to compute the number of unique contributions make a list where posts appear only once
+				np[subEdge] = len(set(posts[subEdge])) # remove duplicates
+				
+				
+
 
 	success = stackAll()
     

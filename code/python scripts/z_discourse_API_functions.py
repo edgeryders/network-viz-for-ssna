@@ -304,10 +304,15 @@ def check_consent(username):
     '''
     call = baseUrl + 'u/' + username + '.json'
     response = responses.get(call).json()
-    if 'edgeryders_consent' in response['user']['custom_fields'] and '1' in response['user']['custom_fields']['edgeryders_consent']:
-        return True
-    else:
-        return False 
+    try:
+        tf = 'edgeryders_consent' in response['user']['custom_fields'] and '1' in response['user']['custom_fields']['edgeryders_consent']
+    except KeyError:
+        print('Warning: server error')
+        print(response)
+        print('Waiting on the server...')
+        time.sleep(5)
+        tf = 'edgeryders_consent' in response['user']['custom_fields'] and '1' in response['user']['custom_fields']['edgeryders_consent']
+    return tf
 
     
         
