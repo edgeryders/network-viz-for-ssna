@@ -1,6 +1,4 @@
-# run from the graph you want to prettify. Normally should be d = 2
-
-
+# Powered by Python 2.7
 # To cancel the modifications performed by the script
 # on the current graph, click on the undo button.
 # Some useful keyboard shortcuts:
@@ -27,27 +25,37 @@ from tulip import tlp
 def main(graph):
     ancestry = graph['ancestry']
     annotations_count = graph['annotations_count']
-    association_depth = graph['association_depth']
     association_breadth = graph['association_breadth']
+    association_depth = graph['association_depth']
+    cooccurrences = graph['co-occurrences']
     code_id = graph['code_id']
+    connectors = graph['connectors']
     creator_id = graph['creator_id']
     description = graph['description']
     name = graph['name']
     name_cs = graph['name_cs']
     name_de = graph['name_de']
     name_en = graph['name_en']
+    name_it = graph['name_it']
     name_pl = graph['name_pl']
     name_sr = graph['name_sr']
+    num_connectors = graph['num_connectors']
+    num_posts = graph['num_posts']
+    number_topics = graph['number_topics']
     parent_code = graph['parent_code']
     postDate = graph['postDate']
     post_id = graph['post_id']
-    uid = graph['uid']
+    posts = graph['posts']
+    topic_id = graph['topic_id']
+    topics = graph['topics']
+    unique_posts = graph['unique_posts']
     unixDate = graph['unixDate']
+    user_gender = graph['user_gender']
+    user_id = graph['user_id']
     viewBorderColor = graph['viewBorderColor']
     viewBorderWidth = graph['viewBorderWidth']
     viewColor = graph['viewColor']
     viewFont = graph['viewFont']
-    viewFontAwesomeIcon = graph['viewFontAwesomeIcon']
     viewFontSize = graph['viewFontSize']
     viewIcon = graph['viewIcon']
     viewLabel = graph['viewLabel']
@@ -67,51 +75,46 @@ def main(graph):
     viewTgtAnchorShape = graph['viewTgtAnchorShape']
     viewTgtAnchorSize = graph['viewTgtAnchorSize']
 
-    def prettify_cooc_graph(graph, intensity=True):
-        '''
-        (graph, bool) => None
-        applies a force directed layout algo on graph.
-        Also maps number of annotiations onto node size
-        if intensity == True, also map edge color intensity to number of co-occurrences
-        '''
-        	# apply the layout
-        params = tlp.getDefaultPluginParameters("FM^3 (OGDF)", graph)
-        params['Unit edge length'] = 100
-        params['Page Format'] = 'Landscape'
-        graph.applyLayoutAlgorithm('FM^3 (OGDF)', viewLayout, params)
-        params = tlp.getDefaultPluginParameters("Curve edges", graph)
-        graph.applyAlgorithm('Curve edges')
+    codesList = []
+    for n in graph.getNodes():
+        if name_en[n] == '':
+            if name_pl[n] == '':
+                name_en[n] = name_cs[n]
+            else:
+                name_en[n] = name_pl[n]
+        codesList.append(name_en[n])
+        codesList.sort(key= str.lower)
         
-        # set labels
-        params = tlp.getDefaultPluginParameters("To labels", graph)
-        params['input'] = name_en
-        graph.applyStringAlgorithm('To labels', params)
-        white = tlp.Color(255, 255, 255, 255)
-        for n in graph.getNodes():
-            viewLabelBorderWidth[n] = 0
-            viewLabelColor[n] = white
-        
-        # apply size mapping
-        params = tlp.getDefaultPluginParameters("Size Mapping", graph)
-        params['min size'] = 2
-        params['max size'] = 20 
-        params['property'] = annotations_count
-        graph.applySizeAlgorithm('Size Mapping', params)
-        
-        # apply color mapping: edges
-        if intensity == True:
-            colors = [tlp.Color.Gray, tlp.Color.Red]
-            colorScale = tlp.ColorScale(colors)
-            params = tlp.getDefaultPluginParameters("Color Mapping", graph)
-            params['input property'] = association_breadth
-            params['type'] = 'logarithmic'
-            params['target'] = 'edges'
-            params['color scale'] = colorScale
-            # graph.applyColorAlgorithm('Color Mapping', params) edges are color coded for forum
-            # nodes
-            params['input property'] = annotations_count
-            params['target'] = 'nodes'
-            graph.applyColorAlgorithm('Color Mapping', params)
-            
-    print(graph.getName())
-    success = prettify_cooc_graph(graph, True)
+    duplicates = []
+    thiscode = 'some_text' # need to initialize it to something
+    for item in codesList:
+        if item == thiscode:
+            duplicates.append(item)
+        thiscode = item
+    
+    print(duplicates)
+    print(len(duplicates))
+##        
+    codesListPL = []
+    for n in graph.getNodes():
+        if name_en[n] == '' and name_pl[n] != '':
+            codesListPL.append(name_cs[n])
+    codesListPL.sort(key = str.lower)
+    for item in codesListPL:
+        print(item)
+    print len(codesListPL)
+
+    import csv
+    with open ('/Users/albertocottica/Downloads/nodeLabels.csv', 'w') as csvfile: 
+        fieldnames = ['link', 'name_en', 'name_de', 'name_cs', 'name_pl']
+        writer = csv.DictWriter(csvfile, fieldnames = fieldnames)
+        writer.writeheader()
+        for  n in graph.getNodes():
+            row = {}
+            row['link'] = 'https://edgeryders.eu/annotator/codes/' + str(code_id[n])
+            row['name_en'] = name_en[n]
+            row['name_de'] = name_de[n]
+            row['name_cs'] = name_cs[n]
+            row['name_pl'] = name_pl[n]
+            writer.writerow(row)
+

@@ -1,4 +1,6 @@
-# color code edges according to language
+## iterate over the stacked graphs of each language forum and make a composite
+## edges keep track of d and b PER EACH LANGUAGE
+## run from the root
 
 from tulip import tlp
 # The updateVisualization(centerViews = True) function can be called
@@ -15,20 +17,26 @@ from tulip import tlp
 def main(graph):
     ancestry = graph['ancestry']
     annotations_count = graph['annotations_count']
+    association_breadth = graph['association breadth']
+    association_depth = graph['association depth']
     code_id = graph['code_id']
+    connectors = graph['connectors']
     creator_id = graph['creator_id']
-    degree = graph['degree']
     description = graph['description']
     forum = graph['forum']
+    name = graph['name']
     name_cs = graph['name_cs']
+    name_de = graph['name_de']
     name_en = graph['name_en']
     name_pl = graph['name_pl']
     name_sr = graph['name_sr']
-    numComms = graph['numComms']
     parent_code = graph['parent_code']
+    postDate = graph['postDate']
     post_id = graph['post_id']
+    posts = graph['posts']
+    topic_id = graph['topic_id']
+    unixDate = graph['unixDate']
     user_id = graph['user_id']
-    user_name = graph['user_name']
     viewBorderColor = graph['viewBorderColor']
     viewBorderWidth = graph['viewBorderWidth']
     viewColor = graph['viewColor']
@@ -52,49 +60,24 @@ def main(graph):
     viewTexture = graph['viewTexture']
     viewTgtAnchorShape = graph['viewTgtAnchorShape']
     viewTgtAnchorSize = graph['viewTgtAnchorSize']
-    # initialize the colors
-    blue = tlp.Color(102,204,255, 255)  
-    red = tlp.Color(204,51, 0, 255)
-    green = tlp.Color(80,187,140, 255)
-    orange = tlp.Color(255, 153, 0, 255)
-    purple = tlp.Color(255, 0, 255, 200)
-    steel = tlp.Color(160,160,160, 255) ## steel I keep for nodes that participate in more than one conversation
-    colors = [blue, red, green, orange, purple, steel] # need to add more colors
 
-
-    def color_edges():
+    def build_stacked_composite():
         '''
-        (None) => None
-        colors the edges according to the value of the forum property
+        (None) => graph
+        build a graph with the STACKED edges from every language
         '''
-        fora = {} # map from value of forum to color
-        i = 0 
-        for e in graph.getEdges():
-            if forum[e] not in fora:
-                fora[forum[e]] = colors[i]
-                i += 1
-            graph.setEdgePropertiesValues(e, {'viewColor': fora[forum[e]]})
-        print(fora)
-        return None
+        comp = graph.addSubGraph('composite')
+        for lang in graph.getSubGraphs():
+            l = lang.getName()
+            print(l)
+            if l not in ['all fora', 'composite']: # all fora must be excluded to avoid double counting
+                stacked = lang.getSubGraph('stacked')
+                for n in stacked.getNodes():
+                    if n not in comp:
+                        comp.addNode(n)
+                for e in stacked.getEdges():
+                    comp.addEdge(e)
+        return comp
         
-    def color_nodes():
-        '''
-        (None) => None
-        color nodes according to the colors of the incident edges.
-        * if all edges are of the same color, the node imherits that color
-        * if there are at least two edges of different colors, the node is colored in steel
-        '''    
-        for n in graph.getNodes():
-            incidentEdgeColors = []
-            for e in graph.getInOutEdges(n):
-                if viewColor[e] not in incidentEdgeColors:
-                    incidentEdgeColors.append(viewColor[e])
-            if len(incidentEdgeColors) == 1:
-                viewColor[n] = incidentEdgeColors[0]
-            else:
-                viewColor[n] = steel
-                
-        
-        
-    success = color_edges()    
-    success = color_nodes()
+    success = build_stacked_composite()
+    

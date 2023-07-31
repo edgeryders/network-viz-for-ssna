@@ -1,3 +1,4 @@
+
 # Prettify. Run from the stacked.
 
 # To cancel the modifications performed by the script
@@ -83,10 +84,11 @@ def main(graph):
 #	graph.applyColorAlgorithm('Color Mapping')
 #	
 	# set labels 
-	params = tlp.getDefaultPluginParameters("To labels", graph)
-	params['input'] = user_name
-	graph.applyStringAlgorithm('To labels', params)
-	white = tlp.Color(255, 255, 255, 255)
-	for n in graph.getNodes():
-		viewLabelBorderWidth[n] = 0
-		viewLabelColor[n] = white
+#	params = tlp.getDefaultPluginParameters("To labels", graph)
+#	params['input'] = user_name
+#	graph.applyStringAlgorithm('To labels', params)
+#	white = tlp.Color(255, 255, 255, 255)
+#	for n in graph.getNodes():
+#		viewLabelBorderWidth[n] = 0
+#		viewLabelColor[n] = white
+#

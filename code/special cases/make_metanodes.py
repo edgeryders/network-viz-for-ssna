@@ -75,15 +75,20 @@ def main(graph):
         gname = graph.getName()
         ssg = graph.getSubGraph(sg)
         ssgname = ssg.getName()
-        og = graph.addCloneSubGraph(gname + '_unchanged' , True)
-        csg = graph.addCloneSubGraph(gname + '_mn_' + ssgname)
+        og = graph.getSubGraph(gname + '_unchanged') # a duplicate, unchanged
+        if og is None:
+            og = graph.addCloneSubGraph(gname + '_unchanged' , True) # if it does not exist already, I create one
+        csg = graph.getSubGraph(gname + '_mn') # the subgraph containing the metanodes
+        if csg is None: 
+            csg = graph.addCloneSubGraph(gname + '_mn', True) # if it does not exist already, I create one      
         
         # create the "metanode" and populate its properties
-        mn = csg.createMetaNode(ssg)
+        mn = csg.createMetaNode(ssg, False, False)
         name_en[mn] = ssg.getName()
         anns = 0 # to populate later when I iterate through nodes in ssn
         steel = tlp.Color(160,160,160, 255)
-        viewColor[mn] = steel # default color
+        csg.setNodePropertiesValues(mn, {'viewColor': steel})
+        # viewColor[mn] = steel # default color
         # immediately erase incident edges
         for e in csg.getInOutEdges(mn):
             csg.delEdge(e)
@@ -110,13 +115,18 @@ def main(graph):
 
         annotations_count[mn] = anns
         if len(colors) == 1:
-            viewColor[mn] = colors[0]
+            csg.setNodePropertiesValues(mn, {'viewColor': colors[0]})
+            # viewColor[mn] = colors[0]
         for key in edgebox:
             print(name_en[key])
         print ('Edges in the box: ' + str(len(edgebox)))
         for n in edgebox: 
-            newedge = csg.addEdge(n,mn) # each of these nodes induce an edge
-            viewColor[newedge] = steel # default color
+            if n in csg.getNodes():
+                newedge = csg.addEdge(n,mn) # each of these nodes induce an edge
+                csg.setEdgePropertiesValues(newedge, {'viewColor': steel})
+            else:
+                
+            #viewColor[newedge] = steel # default color
             co_occ = 0 # the three edge properties I want to populate
             num_con = 0
             conn = []
@@ -128,7 +138,8 @@ def main(graph):
                 if viewColor[e] not in colors:
                     colors.append(viewColor[e])
             if len (colors) == 1:
-                viewColor[newedge] = colors[0]
+                csg.setEdgePropertiesValues(newedge, {'viewColor': colors[0]})
+                # viewColor[newedge] = colors[0]
             cooccurrences[newedge] = co_occ
             num_connectors[newedge] = num_con
             connectors[newedge] = conn
@@ -141,5 +152,5 @@ def main(graph):
  
         return csg
         
-    success = make_metanode('regulation')
+    success = make_metanode('green')
   

@@ -23,21 +23,33 @@ def findEdge(node1, node2, graph1, directed = False, create = True):
    if not returns a newly created edge unless stated otherwise
    deals with either directed or undirected graphs
    '''
-	e = graph1.existEdge(node1, node2, directed)
+	e = graph1.existEdge(node1, node2)
 	if e.isValid():
 		return e
 	else:
-		if create:
-				e = graph1.addEdge(node1, node2)
-				return e 
+		if not directed:
+			e = graph1.existEdge(node2, node1)
+			if e.isValid():
+				return e
+			else:
+				if create:
+					e = graph1.addEdge(node1, node2)
+					return e 
+				else:
+					return None                       
 		else:
-			return None
+			if create:    
+				e = graph1.addEdge(node1, node2)
+				return e
+			else:
+				return None
 
 
 def main(graph): 
-	name = graph.getStringProperty("name")
+	name = graph.getStringProperty("name_en")
 	postDate = graph.getStringProperty("postDate")
 	user_id = graph.getStringProperty("user_id")
+	topic_id = graph.getStringProperty('topic_id')
 	unixDate = graph.getDoubleProperty("unixDate")
 	viewBorderColor = graph.getColorProperty("viewBorderColor")
 	viewBorderWidth = graph.getDoubleProperty("viewBorderWidth")
@@ -73,12 +85,16 @@ def main(graph):
 		'''
 		# initialize properties I need
 		post_id = graph.getStringProperty('post_id')
-		posts =  graph.getStringVectorProperty('posts') # stores the list of posts coded with both the codes incident to this edge 
+		posts =  graph.getStringVectorProperty('posts') # stores the list of posts coded with both the codes incident to this edge
+		np = graph.getDoubleProperty('unique_posts') # stores the number of posts coded with both the codes incident to this edge
 		association_depth = graph.getIntegerProperty('association_depth') # stores k(e), the number of posts coded with both the codes incident to this edge
 		connectors = graph.getStringVectorProperty('connectors') # stores the list of people making the association. Its length is kn(e)
 		association_breadth = graph.getIntegerProperty('association_breadth') # stores the number of people making the connection.
-		user_gender = graph.getStringProperty('user_gender') # in the nonStacked, the gender of the person who authored the coded post where this association occurred
-		gender_list = graph.getStringVectorProperty('gender_list') # in the stacked, the list of the gender of the authors of the posts where this association was made
+		topics = graph.getStringVectorProperty('topics') # stores the list of topics on which the co-occurrence appears
+		number_topics = graph.getIntegerProperty('number_topics') # stores the number of topics
+		user_gender = graph.getStringProperty('user_gender') # stores the informant's gender on the unstacked edge
+		gen = graph.getStringProperty('gen')
+		gender_list = graph.getStringVectorProperty('gender_list') # the gender of each informant on the stacked edge
 		gs = []
 		for g in graph.getSubGraphs():
 		    gs.append(g)
@@ -88,8 +104,10 @@ def main(graph):
 		    graph.addCloneSubGraph(gname)
 
 		for g in graph.getSubGraphs():
-			# clone the parallel edges graph onto a new subgrah
-			nonStacked = g.addCloneSubGraph('nonStacked')
+			# clone the parallel edges graph onto a new subgraph
+			print(g.getName(), type(g))
+			nonStacked = g.getSubGraph('nonStacked')
+
 							
 			# create a stacked subgraph 
 			stacked = g.addSubGraph('stacked')	
@@ -98,34 +116,46 @@ def main(graph):
 			for n in nonStacked.getNodes():	
 				stacked.addNode(n)
 				
-			# you go over all edges in graph1 and add only one edge to graph2
+			# go over all edges in graph1 and add only one edge to graph2
 			# also collect the data you are interested in
 			for edge in nonStacked.getEdges():
 				source = nonStacked.source(edge)
 				target = nonStacked.target(edge)
 				edgeColor = viewColor[edge]
+				# print ('gender: ' + user_gender[edge])
 				# source and target are nodes connected
 				subEdge = findEdge(source, target, stacked, False, False)
 				if subEdge == None: # the stacked does not contain any edge between source and target
 					subEdge = stacked.addEdge(source, target)
-					stacked.setEdgePropertiesValues(subEdge, {'viewColor': edgeColor, 'connectors': [user_id[edge]], 'posts': [post_id[edge]], 'gender_list': [user_gender[edge]]})
-					
+					initialize_edge = stacked.setEdgePropertiesValues(subEdge, {'viewColor': edgeColor, 'connectors': [user_id[edge]], 'posts': [post_id[edge]], 'topics': [topic_id[edge]], 'gender_list': [user_gender[edge]]})
 				else:
+					postsList = stacked.getEdgePropertiesValues(subEdge)['posts']
+					postsList.append(post_id[edge])
+					update = stacked.setEdgePropertiesValues(subEdge, {'posts': postsList})
+					gendersList = stacked.getEdgePropertiesValues(subEdge)['gender_list']
+					gendersList.append(user_gender[edge])
+					update = stacked.setEdgePropertiesValues(subEdge, {'gender_list': gendersList})
+					cooc[subEdge] += 1
+					connectorsList = connectors[subEdge] # Bruno's version! graph.getEdgePropertiesValues(subEdge)['connectors']
+					topicsList = topics[subEdge] 
 					postsList = posts[subEdge]
-					postsList.append(post_id[edge])				
-					posts[subEdge]=postsList
-					genderList = gender_list[subEdge]
-					genderList.append(user_gender[edge])
-					gender_list[subEdge] = genderList
-					association_depth[subEdge] += 1
-					connectorsList = connectors[subEdge]
 					if user_id[edge] not in connectorsList:
 						connectorsList.append(user_id[edge])
-						update = graph.setEdgePropertiesValues(subEdge, {'connectors': connectorsList})
-			# last move: iterate over edges of the stacked and compute the kp(e) property
-			for Ed in stacked.getEdges():
-				association_breadth[Ed] = len(connectors[Ed])
-				association_depth[Ed] = len(posts[Ed])
+						update = stacked.setEdgePropertiesValues(subEdge, {'connectors': connectorsList})
+					if topic_id[edge] not in topicsList:
+						topicsList.append(topic_id[edge])
+						update = stacked.setEdgePropertiesValues(subEdge, {'topics': topicsList})
+
+			# last move: iterate over edges of the stacked and compute the numeric properties
+			for subEdge in stacked.getEdges():
+				association_breadth[subEdge] = len(connectors[subEdge])
+				association_depth[subEdge] = len(posts[subEdge]) # define a function to compute num_posts based on posts_list
+				numtops[subEdge] = len(topics[subEdge])
+				posts_seen = [] # to compute the number of unique contributions make a list where posts appear only once
+				np[subEdge] = len(set(posts[subEdge])) # remove duplicates
+				
+				
+
 
 	success = stackAll()
     

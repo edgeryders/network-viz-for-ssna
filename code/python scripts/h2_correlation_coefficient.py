@@ -1,4 +1,7 @@
-# color code edges according to language
+'''
+Computes correlation coefficient between two (edge, for now) properties.
+Run from the appropriate graph (normally the stacked)
+'''
 
 from tulip import tlp
 # The updateVisualization(centerViews = True) function can be called
@@ -15,25 +18,36 @@ from tulip import tlp
 def main(graph):
     ancestry = graph['ancestry']
     annotations_count = graph['annotations_count']
+    association_breadth = graph['association_breadth']
+    association_depth = graph['association_depth']
+    cooccurrences = graph['co-occurrences']
     code_id = graph['code_id']
+    connectors = graph['connectors']
     creator_id = graph['creator_id']
-    degree = graph['degree']
     description = graph['description']
-    forum = graph['forum']
+    name = graph['name']
     name_cs = graph['name_cs']
+    name_de = graph['name_de']
     name_en = graph['name_en']
+    name_it = graph['name_it']
     name_pl = graph['name_pl']
     name_sr = graph['name_sr']
-    numComms = graph['numComms']
+    num_connectors = graph['num_connectors']
+    num_posts = graph['num_posts']
+    number_topics = graph['number_topics']
     parent_code = graph['parent_code']
+    postDate = graph['postDate']
     post_id = graph['post_id']
+    posts = graph['posts']
+    topic_id = graph['topic_id']
+    topics = graph['topics']
+    unique_posts = graph['unique_posts']
+    unixDate = graph['unixDate']
     user_id = graph['user_id']
-    user_name = graph['user_name']
     viewBorderColor = graph['viewBorderColor']
     viewBorderWidth = graph['viewBorderWidth']
     viewColor = graph['viewColor']
     viewFont = graph['viewFont']
-    viewFontAwesomeIcon = graph['viewFontAwesomeIcon']
     viewFontSize = graph['viewFontSize']
     viewIcon = graph['viewIcon']
     viewLabel = graph['viewLabel']
@@ -52,49 +66,21 @@ def main(graph):
     viewTexture = graph['viewTexture']
     viewTgtAnchorShape = graph['viewTgtAnchorShape']
     viewTgtAnchorSize = graph['viewTgtAnchorSize']
-    # initialize the colors
-    blue = tlp.Color(102,204,255, 255)  
-    red = tlp.Color(204,51, 0, 255)
-    green = tlp.Color(80,187,140, 255)
-    orange = tlp.Color(255, 153, 0, 255)
-    purple = tlp.Color(255, 0, 255, 200)
-    steel = tlp.Color(160,160,160, 255) ## steel I keep for nodes that participate in more than one conversation
-    colors = [blue, red, green, orange, purple, steel] # need to add more colors
-
-
-    def color_edges():
+    
+    def corr_coefficient(property1, property2):
         '''
-        (None) => None
-        colors the edges according to the value of the forum property
+        (property, property => float
         '''
-        fora = {} # map from value of forum to color
-        i = 0 
+        from scipy.stats.stats import pearsonr
+        import numpy as np
+        prop1 = []
+        prop2 = []
         for e in graph.getEdges():
-            if forum[e] not in fora:
-                fora[forum[e]] = colors[i]
-                i += 1
-            graph.setEdgePropertiesValues(e, {'viewColor': fora[forum[e]]})
-        print(fora)
-        return None
-        
-    def color_nodes():
-        '''
-        (None) => None
-        color nodes according to the colors of the incident edges.
-        * if all edges are of the same color, the node imherits that color
-        * if there are at least two edges of different colors, the node is colored in steel
-        '''    
-        for n in graph.getNodes():
-            incidentEdgeColors = []
-            for e in graph.getInOutEdges(n):
-                if viewColor[e] not in incidentEdgeColors:
-                    incidentEdgeColors.append(viewColor[e])
-            if len(incidentEdgeColors) == 1:
-                viewColor[n] = incidentEdgeColors[0]
-            else:
-                viewColor[n] = steel
-                
+            prop1.append(property1[e])
+            prop2.append(property2[e])
+        cc = pearsonr(prop1, prop2)
+        return cc
+
+    print (corr_coefficient(association_depth, association_breadth))
         
         
-    success = color_edges()    
-    success = color_nodes()

@@ -40,10 +40,10 @@ def main(graph):
     viewTexture = graph['viewTexture']
     viewTgtAnchorShape = graph['viewTgtAnchorShape']
     viewTgtAnchorSize = graph['viewTgtAnchorSize']
-    
-    def make_ccn_from_tag(tag):
+        
+    def make_ccn_from_tags(tagList):
         '''
-        (string) => None
+        (list of strs) => None
         starts from a Discourse tag referring to an ethnographic research project (ethno-PROJECTNAME).
         returns the codes co-occurrence network of that project.
         nodes are codes. Edges are induced when two codes occur on the same post.
@@ -51,90 +51,103 @@ def main(graph):
         all relevant information about annotations are saved as edge properties.
         '''
         # I need a map from post ID to the author_ID of the posts being annotated
-        # also need one fro post ID to the topic ID to track thjat measure of diversity
+        # also need one from post ID to the topic ID to track that measure of diversity
+        # finally, I need a list of codes already in the graph. 
+        # This is needed for when I look at multiple #ethno-NAME tags, because different tags maps 
+        # to different corpora, and I want to 
+        print ('hello world')
+        codesInRootGraph = [] # a list of codes (as Tulip nodes) already added to the root graph.
+        # when we encounter, in a corpus, a code that is already in the root graph from another corpus, 
+        # we just add it to this subgraph's corpus instead of creating a new one.
         authorMap = {}
         topicMap = {}
-        tops = api.fetch_topics_from_tag(tag)
-        for top in tops:
-            posts = api.fetch_posts_in_topic(top) 
-            for post in posts: 
-                authorMap[post['post_id']] = post['user_id']
-                topicMap[post['post_id']] = post['topic_id']
-        # create a subgraph corresponding to the project
-        proj = graph.addSubGraph(tag) 
-        myAnnos = api.fetch_annos(tag)
-        codes = api.fetch_codes_from_annos(myAnnos)
-        # first, pull the nodes from the codes list:
-        # to deal with languages, I first look into the codes to see with locales I have
-        locales = []
-        for code in codes:
-            for item in code['names']:
-                locale = item['locale']
-                if str(locale) not in locales:
-                    locales.append(str(locale))
-        # initialize the properties I need. These are main graph properties.
-        code_id = graph.getStringProperty('code_id')
-        post_id = graph.getStringProperty('post_id')
-        description = graph.getStringProperty('description')
-        creator_id = graph.getStringProperty('creator_id')
-        ancestry = graph.getStringProperty('ancestry')
-        parent_code = graph.getStringProperty('parent_code')
-        annotations_count = graph.getIntegerProperty('annotations_count')
-        user_id = graph.getStringProperty('user_id')
-        topic_id = graph.getStringProperty('topic_id')
-        for locale in locales:
-            # I need to derive the property names from the data, and then assign them to properties 
-            # See https://stackoverflow.com/questions/8530694/use-iterator-as-variable-name-in-python-loop
-            propertynames = dict(("name_" + locale, graph.getStringProperty('name_' + locale)) for locale in locales)
-            # this becomes name_en = graph.getStringProperty('name_en'), name_pl = ...
-        # now fill the properties. Do it in the subgraphs relative to the project   
-        print('Writing code information into graph nodes...')       
-        for code in codes:
-            n = proj.addNode({'code_id': str(code['id'])})
-            if code['description']: # if the description is None the code breaks
-                description[n] = code['description']
-            creator_id[n] = str(code['creator_id'])
-            annotations_count[n] = code['annotations_count']
-            ancestry[n] = str(code['ancestry'])
-            if code['ancestry'] != None: # if the ancestry is None the code breaks
-                parent_code[n] = api.decompose_ancestry(code['ancestry'])[0] # the first element of the list is the direct parent
-            for item in code['names']:
-                proj.setNodePropertiesValues(n, {'name_' + item['locale']: item['name']})  
-        print('*** Nodes added ***')
-             
-        theMap = {} # maps from posts to codes. Need it to create edges.
-        # also adding the posts' author for "one man one vote" network reduction
-        # and also the topic_id for diversity indices computation
-        for anno in myAnnos:
-            code_id = anno['code_id']
-            post_id = anno['post_id']
-            if post_id not in theMap:
-                theMap[post_id]= [code_id]
-            else:
-                theMap[post_id].append(code_id)
-                        
-        # add edges from theMap to the project's subgraph.
-        # each key in theMap has a list of codes (nodes) as a value. Each list is a clique.
-        for post in theMap:
-            clique = theMap[post]
-            post_author = authorMap[post]
-            post_topic = topicMap[post]
-            for i in range (len(clique)):
-                for j in range(i+1, len(clique)):
-                    for n1 in proj['code_id'].getNodesEqualTo(str(clique[i])):
-                        source = n1
-                    for n2 in proj['code_id'].getNodesEqualTo(str(clique[j])):
-                        target = n2
-                    if n1 != n2: # self-loops do not make sense in a semantic network
-                        e = proj.addEdge(source, target)
-                        proj.setEdgePropertiesValues(e, {'post_id': str(post), 'user_id': str(post_author), 'topic_id': str(post_topic)})
-        print ('*** Edges added ***')
-        
+        for tag in tagList:
+            tops = api.fetch_topics_from_tag(tag)
+            for top in tops:
+                posts = api.fetch_posts_in_topic(top) 
+                for post in posts: 
+                    authorMap[post['post_id']] = post['user_id']
+                    topicMap[post['post_id']] = post['topic_id']
+            # create a subgraph corresponding to the project
+            proj = graph.addSubGraph(tag) 
+            myAnnos = api.fetch_annos(tag)
+            codes = api.fetch_codes_from_annos(myAnnos)
+            # first, pull the nodes from the codes list:
+            # to deal with languages, I first look into the codes to see with locales I have
+            locales = []
+            for code in codes:
+                for item in code['names']:
+                    locale = item['locale']
+                    if str(locale) not in locales:
+                        locales.append(str(locale))
+            # initialize the properties I need. These are main graph properties.
+            code_id = graph.getStringProperty('code_id')
+            post_id = graph.getStringProperty('post_id')
+            description = graph.getStringProperty('description')
+            creator_id = graph.getStringProperty('creator_id')
+            ancestry = graph.getStringProperty('ancestry')
+            parent_code = graph.getStringProperty('parent_code')
+            annotations_count = graph.getIntegerProperty('annotations_count')
+            user_id = graph.getStringProperty('user_id')
+            topic_id = graph.getStringProperty('topic_id')
+            for locale in locales:
+                # I need to derive the property names from the data, and then assign them to properties 
+                # See https://stackoverflow.com/questions/8530694/use-iterator-as-variable-name-in-python-loop
+                propertynames = dict(("name_" + locale, graph.getStringProperty('name_' + locale)) for locale in locales)
+                # this becomes name_en = graph.getStringProperty('name_en'), name_pl = ...
+            # now fill the properties. Do it in the subgraphs relative to the project   
+            print('Writing code information into graph nodes...')       
+            for code in codes:
+                found = 'False' 
+                for n in graph.getNodes():
+                    if str(code['id']) == code_id[n]:
+                        proj.addNode(n)
+                        found = 'True'
+                if found == 'False':
+                    n = proj.addNode({'code_id': str(code['id'])})
+                    if code['description']: # if the description is None the code breaks
+                        description[n] = code['description']
+                    creator_id[n] = str(code['creator_id'])
+                    annotations_count[n] = code['annotations_count']
+                    ancestry[n] = str(code['ancestry'])
+                    if code['ancestry'] != None: # if the ancestry is None the code breaks
+                        parent_code[n] = api.decompose_ancestry(code['ancestry'])[0] # the first element of the list is the direct parent
+                    for item in code['names']:
+                        proj.setNodePropertiesValues(n, {'name_' + item['locale']: item['name']})  
+                    
+            print('*** Nodes added ***')
+                 
+            theMap = {} # maps from posts to codes. Need it to create edges.
+            # also adding the posts' author for "one man one vote" network reduction
+            # and also the topic_id for diversity indices computation
+            for anno in myAnnos:
+                code_id = anno['code_id']
+                post_id = anno['post_id']
+                if post_id not in theMap:
+                    theMap[post_id]= [code_id]
+                else:
+                    theMap[post_id].append(code_id)
+                            
+            # add edges from theMap to the project's subgraph.
+            # each key in theMap has a list of codes (nodes) as a value. Each list is a clique.
+            for post in theMap:
+                clique = theMap[post] # this list contains the IDs of all codes used in the annotation to post
+                post_author = authorMap[post]
+                post_topic = topicMap[post]
+                for i in range (len(clique)):
+                    for j in range(i+1, len(clique)):
+                        for n1 in proj['code_id'].getNodesEqualTo(str(clique[i])):
+                            source = n1 #set the source to this element of the clique
+                        for n2 in proj['code_id'].getNodesEqualTo(str(clique[j])):
+                            target = n2 # set the target to this other element of the clique
+                        if n1 != n2: # self-loops do not make sense in a semantic network
+                            e = proj.addEdge(source, target)
+                            proj.setEdgePropertiesValues(e, {'post_id': str(post), 'user_id': str(post_author), 'topic_id': str(post_topic)})
+            print ('*** Edges added ***')
+            
         end_script = datetime.datetime.now()
         running_time = end_script - start_script
         print ('Executed in ' + str(running_time))
         return None
-    # tags = ['ethno-test-alberto']
-    tags = ['ethno-poprebel', 'ethno-ngi-forward', 'ethno-opencare']
-    for tag in tags:
-        success = make_ccn_from_tag(tag)
+    tags = ['ethno-rebelpop-polska-interviews'] # 'ethno-rebelpop-czech-interviews', , 'ethno-rebelpop-polska-interviews'
+    success = make_ccn_from_tags(tags)

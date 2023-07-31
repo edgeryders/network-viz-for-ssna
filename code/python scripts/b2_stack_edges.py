@@ -87,11 +87,12 @@ def main(graph):
 		post_id = graph.getStringProperty('post_id')
 		posts =  graph.getStringVectorProperty('posts') # stores the list of posts coded with both the codes incident to this edge
 		np = graph.getDoubleProperty('unique_posts') # stores the number of posts coded with both the codes incident to this edge
-		cooc = graph.getIntegerProperty('association_depth') # stores k(e), the number of posts coded with both the codes incident to this edge
+		cooc = graph.getDoubleProperty('association_depth') # stores k(e), the number of posts coded with both the codes incident to this edge
 		connectors = graph.getStringVectorProperty('connectors') # stores the list of people making the association. Its length is kn(e)
-		uc = graph.getIntegerProperty('association_breadth') # stores the number of people making the connection.
+		uc = graph.getDoubleProperty('association_breadth') # stores the number of people making the connection.
 		topics = graph.getStringVectorProperty('topics') # stores the list of topics on which the co-occurrence appears
-		numtops = graph.getIntegerProperty('number_topics') # stores the number of topics
+		numtops = graph.getDoubleProperty('number_topics') # stores the number of topics
+		print('stacking subgraphs of: ' + graph.getName())
 		gs = []
 		for g in graph.getSubGraphs():
 		    gs.append(g)

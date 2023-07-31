@@ -1,6 +1,4 @@
-# run from the graph you want to prettify. Normally should be d = 2
-
-
+# Powered by Python 2.7
 # To cancel the modifications performed by the script
 # on the current graph, click on the undo button.
 # Some useful keyboard shortcuts:
@@ -27,22 +25,36 @@ from tulip import tlp
 def main(graph):
     ancestry = graph['ancestry']
     annotations_count = graph['annotations_count']
-    association_depth = graph['association_depth']
     association_breadth = graph['association_breadth']
+    association_depth = graph['association_depth']
+    cooccurrences = graph['co-occurrences']
     code_id = graph['code_id']
+    connectors = graph['connectors']
     creator_id = graph['creator_id']
+    degree = graph['degree']
     description = graph['description']
+    female_prevalence = graph['female_prevalence']
     name = graph['name']
     name_cs = graph['name_cs']
     name_de = graph['name_de']
     name_en = graph['name_en']
+    name_it = graph['name_it']
     name_pl = graph['name_pl']
     name_sr = graph['name_sr']
+    num_connectors = graph['num_connectors']
+    num_posts = graph['num_posts']
+    number_topics = graph['number_topics']
     parent_code = graph['parent_code']
     postDate = graph['postDate']
     post_id = graph['post_id']
-    uid = graph['uid']
+    posts = graph['posts']
+    topic_id = graph['topic_id']
+    topics = graph['topics']
+    unique_posts = graph['unique_posts']
     unixDate = graph['unixDate']
+    user_gender = graph['user_gender']
+    user_id = graph['user_id']
+    user_name = graph['user_name']
     viewBorderColor = graph['viewBorderColor']
     viewBorderWidth = graph['viewBorderWidth']
     viewColor = graph['viewColor']
@@ -66,52 +78,30 @@ def main(graph):
     viewTexture = graph['viewTexture']
     viewTgtAnchorShape = graph['viewTgtAnchorShape']
     viewTgtAnchorSize = graph['viewTgtAnchorSize']
+    wordCount = graph['wordCount']
 
-    def prettify_cooc_graph(graph, intensity=True):
+    def export_labels(g):
         '''
-        (graph, bool) => None
-        applies a force directed layout algo on graph.
-        Also maps number of annotiations onto node size
-        if intensity == True, also map edge color intensity to number of co-occurrences
+        (graph) => None
+        print and export the labels of the nodes in graph
         '''
-        	# apply the layout
-        params = tlp.getDefaultPluginParameters("FM^3 (OGDF)", graph)
-        params['Unit edge length'] = 100
-        params['Page Format'] = 'Landscape'
-        graph.applyLayoutAlgorithm('FM^3 (OGDF)', viewLayout, params)
-        params = tlp.getDefaultPluginParameters("Curve edges", graph)
-        graph.applyAlgorithm('Curve edges')
+        filename = '/Users/albertocottica/Downloads/gendered_edges.csv' # change as appropriate
+        import csv
         
-        # set labels
-        params = tlp.getDefaultPluginParameters("To labels", graph)
-        params['input'] = name_en
-        graph.applyStringAlgorithm('To labels', params)
-        white = tlp.Color(255, 255, 255, 255)
-        for n in graph.getNodes():
-            viewLabelBorderWidth[n] = 0
-            viewLabelColor[n] = white
-        
-        # apply size mapping
-        params = tlp.getDefaultPluginParameters("Size Mapping", graph)
-        params['min size'] = 2
-        params['max size'] = 20 
-        params['property'] = annotations_count
-        graph.applySizeAlgorithm('Size Mapping', params)
-        
-        # apply color mapping: edges
-        if intensity == True:
-            colors = [tlp.Color.Gray, tlp.Color.Red]
-            colorScale = tlp.ColorScale(colors)
-            params = tlp.getDefaultPluginParameters("Color Mapping", graph)
-            params['input property'] = association_breadth
-            params['type'] = 'logarithmic'
-            params['target'] = 'edges'
-            params['color scale'] = colorScale
-            # graph.applyColorAlgorithm('Color Mapping', params) edges are color coded for forum
-            # nodes
-            params['input property'] = annotations_count
-            params['target'] = 'nodes'
-            graph.applyColorAlgorithm('Color Mapping', params)
-            
-    print(graph.getName())
-    success = prettify_cooc_graph(graph, True)
+        thedata = []
+        for e in graph.getEdges():
+            # change the composition of the CSV file in the line below
+            row = {'depth': association_depth[e], 'breadth': association_breadth[e], 'femprev': female_prevalence[e] }
+            thedata.append(row)
+        with open (filename, 'w') as csvfile: 
+            fieldnames = []
+            for key in row:
+                fieldnames.append(key)
+            writer = csv.DictWriter(csvfile, delimiter = ',', fieldnames = fieldnames)
+            writer.writeheader()
+            for item in thedata:
+                writer.writerow(item)
+    
+    success = export_labels(graph)
+
+  

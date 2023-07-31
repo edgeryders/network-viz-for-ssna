@@ -1,5 +1,5 @@
-# run from the graph you want to prettify. Normally should be d = 2
-
+# run from the graph you want to prettify. 
+# for POPREBEL, edges are already color coded
 
 # To cancel the modifications performed by the script
 # on the current graph, click on the undo button.
@@ -98,20 +98,5 @@ def main(graph):
         params['property'] = annotations_count
         graph.applySizeAlgorithm('Size Mapping', params)
         
-        # apply color mapping: edges
-        if intensity == True:
-            colors = [tlp.Color.Gray, tlp.Color.Red]
-            colorScale = tlp.ColorScale(colors)
-            params = tlp.getDefaultPluginParameters("Color Mapping", graph)
-            params['input property'] = association_breadth
-            params['type'] = 'logarithmic'
-            params['target'] = 'edges'
-            params['color scale'] = colorScale
-            # graph.applyColorAlgorithm('Color Mapping', params) edges are color coded for forum
-            # nodes
-            params['input property'] = annotations_count
-            params['target'] = 'nodes'
-            graph.applyColorAlgorithm('Color Mapping', params)
             
-    print(graph.getName())
     success = prettify_cooc_graph(graph, True)

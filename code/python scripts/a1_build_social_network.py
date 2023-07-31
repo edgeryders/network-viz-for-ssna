@@ -77,7 +77,7 @@ def main(graph):
       useful to build a network from one top-level cat, excluding one or more subcats (eg. workspace)
       '''
   
-      logfile = '/Users/albertocottica/Documents/graphBuildLog.txt' # my log file
+      logfile = '/Users/albertocottica/public folder/graphBuildLog.txt' # my log file
       success = api.save_string(str(datetime.date.today()), logfile)
       for cat in catList:
           fest = graph.addSubGraph(cat)
@@ -242,9 +242,9 @@ def main(graph):
           api.save_string(message3 +'\n', logfile)
       return None
       
-  cats = ['earthos/the-reef']
-  build_graph_from_cats(cats) 
-    
-#  listOfTags = ['ethno-ngi-forward'] # replace this list with the list of categories you want 
-#  build_graph_from_tags(listOfTags)
+#  cats = ['witness', 'earthos/scifi-economics']
+#  build_graph_from_cats(cats) 
+#    
+  listOfTags = ['ethno-rebelpop-polska-interviews'] # replace this list with the list of categories you want 
+  build_graph_from_tags(listOfTags)
 

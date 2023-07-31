@@ -1,8 +1,8 @@
-# this script creates a subgraph for each level of d (previously called k), from 2 up. 
+# this script creates a subgraph for each level of b, from 2 up. 
 # run from the ethno-PROJECTNAME graph
 
 def main(graph):
-    cooc = graph['association_depth']
+    ab = graph.getDoubleProperty('association_breadth') # stores the number of people making the connection.
     code_id = graph['code_id']
     name = graph['name']
     postDate = graph['postDate']
@@ -33,30 +33,32 @@ def main(graph):
     viewTgtAnchorShape = graph['viewTgtAnchorShape']
     viewTgtAnchorSize = graph['viewTgtAnchorSize']
     
-    print(graph.getName())
-    stacked = graph.getSubGraph(3)
-    print(type(stacked))
-    # determine the maximum value of d
-    dmax = 0
+
+    # af = graph.getSubGraph('all fora') only use this part when looking at POPREBEL data with multiple fora
+    # stacked = af.getSubGraph('stacked')
+
+    stacked = graph.getSubGraph(4)
+    # determine the maximum value of b
+    bmax = 0
     for e in stacked.getEdges():
-        if cooc[e] > dmax:
-            dmax = cooc[e]
+        if ab[e] > bmax:
+           bmax = int(ab[e])
     # add a subgraph that is simply the copy of the stack (for better visualization)
-    thecopy = stacked.addCloneSubGraph('d = 001')
-    # add a subgraph for each value of k. Copy all edges with co-occurrences >= k
+    thecopy = stacked.addCloneSubGraph('b = 001')
+    # add a subgraph for each value of b. Copy all edges with b>=b*
     # however, make sure that each subgraph you add is not exactly identical to the one you added previously 
-    # we do this check by number of nodes
+    # we do this by checking the  number of nodes
     oldNumNodes = stacked.numberOfNodes()
-    for d in range(2,int(dmax)):
-        if d < 10: # neat ranking of subgraphs on the list
-            sgname = 'd = 00' + str(d)
-        elif d < 100:
-            sgname = 'd = 0' + str(d)
+    for b in range(2,bmax):
+        if b < 10: # neat ranking of subgraphs on the list
+            sgname = 'b = 00' + str(b)
+        elif b < 100:
+            sgname = 'b = 0' + str(b)
         else:
-            sgname = 'd = ' + str(d)
+            sgname = 'b = ' + str(b)
         sg = stacked.addSubGraph(sgname)
         for e in stacked.getEdges():
-            if cooc[e] >= d:
+            if ab[e] >= b:
                 source = stacked.source(e)
                 target = stacked.target(e)
                 if source not in sg.getNodes():

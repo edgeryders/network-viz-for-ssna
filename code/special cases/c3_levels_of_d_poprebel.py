@@ -1,8 +1,8 @@
-# this script creates a subgraph for each level of d (previously called k), from 2 up. 
+# this script creates a subgraph for each level of d
 # run from the ethno-PROJECTNAME graph
 
 def main(graph):
-    cooc = graph['association_depth']
+    ad = graph['association_depth']
     code_id = graph['code_id']
     name = graph['name']
     postDate = graph['postDate']
@@ -33,21 +33,20 @@ def main(graph):
     viewTgtAnchorShape = graph['viewTgtAnchorShape']
     viewTgtAnchorSize = graph['viewTgtAnchorSize']
     
-    print(graph.getName())
-    stacked = graph.getSubGraph(3)
-    print(type(stacked))
+
+    stacked = graph.getSubGraph('by d') # changed this to account for the different graph structure in this project
     # determine the maximum value of d
     dmax = 0
     for e in stacked.getEdges():
-        if cooc[e] > dmax:
-            dmax = cooc[e]
+        if ad[e] > dmax:
+            dmax = ad[e]
     # add a subgraph that is simply the copy of the stack (for better visualization)
     thecopy = stacked.addCloneSubGraph('d = 001')
     # add a subgraph for each value of k. Copy all edges with co-occurrences >= k
     # however, make sure that each subgraph you add is not exactly identical to the one you added previously 
     # we do this check by number of nodes
     oldNumNodes = stacked.numberOfNodes()
-    for d in range(2,int(dmax)):
+    for d in range(2,dmax):
         if d < 10: # neat ranking of subgraphs on the list
             sgname = 'd = 00' + str(d)
         elif d < 100:
@@ -56,7 +55,7 @@ def main(graph):
             sgname = 'd = ' + str(d)
         sg = stacked.addSubGraph(sgname)
         for e in stacked.getEdges():
-            if cooc[e] >= d:
+            if ad[e] >= d:
                 source = stacked.source(e)
                 target = stacked.target(e)
                 if source not in sg.getNodes():

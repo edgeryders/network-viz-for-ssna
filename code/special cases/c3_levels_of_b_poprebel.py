@@ -1,8 +1,7 @@
-# this script creates a subgraph for each level of d (previously called k), from 2 up. 
-# run from the ethno-PROJECTNAME graph
+# this script creates a subgraph for each level of b
 
 def main(graph):
-    cooc = graph['association_depth']
+    ab = graph['association_breadth']
     code_id = graph['code_id']
     name = graph['name']
     postDate = graph['postDate']
@@ -33,30 +32,29 @@ def main(graph):
     viewTgtAnchorShape = graph['viewTgtAnchorShape']
     viewTgtAnchorSize = graph['viewTgtAnchorSize']
     
-    print(graph.getName())
-    stacked = graph.getSubGraph(3)
-    print(type(stacked))
+
+    stacked = graph.getSubGraph('composite b') # changed this to account for the different graph structure in this project
     # determine the maximum value of d
     dmax = 0
     for e in stacked.getEdges():
-        if cooc[e] > dmax:
-            dmax = cooc[e]
+        if ab[e] > dmax:
+            dmax = ab[e]
     # add a subgraph that is simply the copy of the stack (for better visualization)
-    thecopy = stacked.addCloneSubGraph('d = 001')
+    thecopy = stacked.addCloneSubGraph('b = 001')
     # add a subgraph for each value of k. Copy all edges with co-occurrences >= k
     # however, make sure that each subgraph you add is not exactly identical to the one you added previously 
     # we do this check by number of nodes
     oldNumNodes = stacked.numberOfNodes()
-    for d in range(2,int(dmax)):
-        if d < 10: # neat ranking of subgraphs on the list
-            sgname = 'd = 00' + str(d)
-        elif d < 100:
-            sgname = 'd = 0' + str(d)
+    for b in range(2,dmax):
+        if b < 10: # neat ranking of subgraphs on the list
+            sgname = 'b = 00' + str(b)
+        elif b < 100:
+            sgname = 'b = 0' + str(b)
         else:
-            sgname = 'd = ' + str(d)
+            sgname = 'b = ' + str(b)
         sg = stacked.addSubGraph(sgname)
         for e in stacked.getEdges():
-            if cooc[e] >= d:
+            if ab[e] >= b:
                 source = stacked.source(e)
                 target = stacked.target(e)
                 if source not in sg.getNodes():

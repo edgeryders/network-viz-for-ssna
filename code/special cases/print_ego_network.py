@@ -1,5 +1,6 @@
-# color code edges according to language
-
+# maps the ego network of a node
+# first select the node and all its neighbour nodes including edges
+# create a subgraph from the selection, then run the script from the selection subgraph
 from tulip import tlp
 # The updateVisualization(centerViews = True) function can be called
 # during script execution to update the opened views
@@ -15,18 +16,28 @@ from tulip import tlp
 def main(graph):
     ancestry = graph['ancestry']
     annotations_count = graph['annotations_count']
+    association_breadth = graph['association_breadth']
+    association_depth = graph['association_depth']
     code_id = graph['code_id']
+    connectors = graph['connectors']
     creator_id = graph['creator_id']
     degree = graph['degree']
     description = graph['description']
-    forum = graph['forum']
+    female_prevalence = graph['female_prevalence']
     name_cs = graph['name_cs']
+    name_de = graph['name_de']
     name_en = graph['name_en']
     name_pl = graph['name_pl']
     name_sr = graph['name_sr']
-    numComms = graph['numComms']
+    number_topics = graph['number_topics']
     parent_code = graph['parent_code']
+    postDate = graph['postDate']
     post_id = graph['post_id']
+    posts = graph['posts']
+    topic_id = graph['topic_id']
+    topics = graph['topics']
+    unique_posts = graph['unique_posts']
+    unixDate = graph['unixDate']
     user_id = graph['user_id']
     user_name = graph['user_name']
     viewBorderColor = graph['viewBorderColor']
@@ -52,49 +63,43 @@ def main(graph):
     viewTexture = graph['viewTexture']
     viewTgtAnchorShape = graph['viewTgtAnchorShape']
     viewTgtAnchorSize = graph['viewTgtAnchorSize']
-    # initialize the colors
-    blue = tlp.Color(102,204,255, 255)  
-    red = tlp.Color(204,51, 0, 255)
-    green = tlp.Color(80,187,140, 255)
-    orange = tlp.Color(255, 153, 0, 255)
-    purple = tlp.Color(255, 0, 255, 200)
-    steel = tlp.Color(160,160,160, 255) ## steel I keep for nodes that participate in more than one conversation
-    colors = [blue, red, green, orange, purple, steel] # need to add more colors
-
-
-    def color_edges():
+    wordCount = graph['wordCount']
+    
+    def find_ego_network(egolabel):
         '''
-        (None) => None
-        colors the edges according to the value of the forum property
+        (string) => list of dicts. Each dict has the form  
+        {'alter': string, 'depth': assdepth property, 
+        'breadth': assbreadth property, 'female prevalence': femprev property}
         '''
-        fora = {} # map from value of forum to color
-        i = 0 
-        for e in graph.getEdges():
-            if forum[e] not in fora:
-                fora[forum[e]] = colors[i]
-                i += 1
-            graph.setEdgePropertiesValues(e, {'viewColor': fora[forum[e]]})
-        print(fora)
-        return None
-        
-    def color_nodes():
-        '''
-        (None) => None
-        color nodes according to the colors of the incident edges.
-        * if all edges are of the same color, the node imherits that color
-        * if there are at least two edges of different colors, the node is colored in steel
-        '''    
+        # find the node corresponding to  egolabel 
         for n in graph.getNodes():
-            incidentEdgeColors = []
-            for e in graph.getInOutEdges(n):
-                if viewColor[e] not in incidentEdgeColors:
-                    incidentEdgeColors.append(viewColor[e])
-            if len(incidentEdgeColors) == 1:
-                viewColor[n] = incidentEdgeColors[0]
-            else:
-                viewColor[n] = steel
-                
-        
-        
-    success = color_edges()    
-    success = color_nodes()
+            if name_en[n] == egolabel:
+                ego = n
+        to_return = []
+    
+        for e in graph.getEdges():
+            thisEdge = {}
+            source = graph.source(e)
+            target = graph.target(e)
+            if source != ego:
+                thisEdge['alter'] = viewLabel[source]
+            else: 
+                thisEdge['alter'] = viewLabel[target]
+            thisEdge['association depth'] = association_depth[e]
+            thisEdge['association breadth'] = association_breadth[e]
+            thisEdge['female_prevalence'] = female_prevalence[e]
+            to_return.append(thisEdge)
+        return to_return
+    
+    import csv
+    dirPath = '/Users/albertocottica/Downloads/'
+    egolabel = 'welfare state'
+    my_data = find_ego_network(egolabel)
+    with open (dirPath + egolabel + '.csv', 'w') as csvfile:
+        fieldnames = []
+        for key in my_data[0]:
+            fieldnames.append(key)
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in my_data:
+            writer.writerow(row)

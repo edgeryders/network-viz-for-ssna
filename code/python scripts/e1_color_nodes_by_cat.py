@@ -32,18 +32,21 @@ def main(graph):
   viewTgtAnchorSize = graph.getSizeProperty("viewTgtAnchorSize")
   wordCount = graph.getDoubleProperty("wordCount")
 
-  allCats = graph.getSubGraph('all Cats Stacked')
+  allCats = graph.getSubGraph('all langs Stacked') # was: all Cats Stacked
+  mc = graph.getSubGraph('missing_codes')
+  ignore = [allCats, mc]
   catGraphs = []
   for g in graph.getSubGraphs():
-    if g != allCats:
+    if g not in ignore:
       catGraphs.append(g)
+  print(catGraphs)
 
-  blue = tlp.Color(102,204,255, 255)  
+  blue = tlp.Color(102,204,255, 255)
+  green = tlp.Color(51,255,204, 255)  
   red = tlp.Color(204,51, 0, 255)
-  green = tlp.Color(51,255,204, 255)
   orange = tlp.Color(255, 153, 0, 255)
   steel = tlp.Color(160,160,160, 255) ## steel I keep for nodes that participate in more than one conversation
-  colors = [blue, red, green, orange, steel] # need to add more colors
+  colors = [green, orange, blue, red, steel] # need to add more colors
   for i in range(len(catGraphs)):
     for e in catGraphs[i].getEdges():
       viewColor[e] = colors[i]

@@ -1,4 +1,4 @@
-# Creates a subgraph with the stacked edges in each category. 
+# Creates a subgraph with the stacked edges in each subgraph. 
 # This is the graph to visualize.
 # Run from the root
 
@@ -19,9 +19,6 @@ from tulip import tlp
 
 def main(graph): 
   viewFontAwesomeIcon = graph.getStringProperty("viewFontAwesomeIcon")  
-  category_id = graph.getIntegerProperty("category_id")
-  post_id = graph.getStringProperty("post_id")
-  user_name = graph.getStringProperty("user_name")
   viewBorderColor = graph.getColorProperty("viewBorderColor")
   viewBorderWidth = graph.getDoubleProperty("viewBorderWidth")
   viewColor = graph.getColorProperty("viewColor")
@@ -51,7 +48,7 @@ def main(graph):
     graphNames.append(sg.getName())
   print graphNames  
     
-  aCS = graph.addSubGraph('all Cats Stacked')
+  aCS = graph.addSubGraph('all tags stacked')
   
   for name in graphNames:
     g = graph.getSubGraph(name).getSubGraph('stacked')

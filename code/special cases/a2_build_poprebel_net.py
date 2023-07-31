@@ -54,13 +54,6 @@ def main(graph):
         for forum in fora: 
             tops = api.fetch_topics_from_cat(forum)
             for top in tops:
-                ## ugly hack here. See: https://edgeryders.eu/t/a-small-problem-with-categories-for-protected-interviews/16242
-                if top in (15517, 15518):
-                    theMap[top] = 'Polish'
-                if top == 15553:
-                    theMap[top] = 'Czech'
-                if top == 15649:
-                    theMap[top] = 'German'
                 if top not in theMap:
                     theMap[top] = fora[forum]
         return theMap
@@ -104,6 +97,7 @@ def main(graph):
         annotations_count = graph.getIntegerProperty('annotations_count')
         user_id = graph.getStringProperty('user_id')
         forum = graph.getStringProperty('forum') # introduced for POREBEL
+        topic_id = graph.getStringProperty('topic_id')
         for locale in locales:
             # I need to derive the property names from the data, and then assign them to properties 
             # See https://stackoverflow.com/questions/8530694/use-iterator-as-variable-name-in-python-loop
@@ -131,20 +125,15 @@ def main(graph):
         for anno in myAnnos:
             code_id = anno['code_id']
             post_id = anno['post_id']
-            topic_id = anno['topic_id']
+            topic_ID = anno['topic_id'] # I cannot call this variable "topic_id" because it is already a property, though I do not use in this case
             # incomplete_annos = [61549, 57699, 57796, 57711, 57696, 57626, 56882, 53607, 53423, 61311] # these annotations miss the topic_id field
-            if topic_id == None:
+            if topic_ID == None:
                 forum = 'Czech'
-            ## ugly hack here. See: https://edgeryders.eu/t/a-small-problem-with-categories-for-protected-interviews/16242
-            elif topic_id in (15517, 15518):
-                forum = 'Polish'
-            elif topic_id == 15553:
-                forum = 'Czech'
-            elif topic_id == 15649:
-                forum = 'German'
-            ## end of ugly hack
-            else:            
-                forum = foraMap[anno['topic_id']] # should it not be foraMap[topic_id]?
+            else:
+                try:            
+                    forum = foraMap[topic_ID] # should it not be foraMap[topic_id]?
+                except KeyError:
+                    print ('Missing topic: ' + str(topic_ID))
             if post_id not in theMap: # it is the first time we encounter this particular post, so we create the entry in the dict
                 entry = {'codes':[code_id], 'forum': forum}
                 theMap[post_id]= entry
@@ -163,8 +152,9 @@ def main(graph):
                         source = n1
                     for n2 in graph['code_id'].getNodesEqualTo(str(clique[j])):
                         target = n2
-                    e = graph.addEdge(source, target)
-                    graph.setEdgePropertiesValues(e, {'post_id': str(post), 'forum': theMap[post]['forum'], 'user_id': str(post_author)})
+                    if n1 != n2: # self-loops do not make sense in this context
+                        e = graph.addEdge(source, target)
+                        graph.setEdgePropertiesValues(e, {'post_id': str(post), 'forum': theMap[post]['forum'], 'user_id': str(post_author)})
         print ('*** Edges added ***')
         
         end_script = datetime.datetime.now()

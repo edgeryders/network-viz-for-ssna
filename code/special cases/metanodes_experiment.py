@@ -1,6 +1,4 @@
-# run from the graph you want to prettify. Normally should be d = 2
-
-
+# Powered by Python 2.7
 # To cancel the modifications performed by the script
 # on the current graph, click on the undo button.
 # Some useful keyboard shortcuts:
@@ -25,29 +23,42 @@ from tulip import tlp
 # The main(graph) function must be defined
 # to run the script on the current graph
 def main(graph):
+    modularity_partition_class = graph['modularity partition class']
+    viewColor = graph['viewColor']
+    viewLayout = graph['viewLayout']
+    viewMetric = graph['viewMetric']
+    Max_Core_Value = graph['Max Core Value']
     ancestry = graph['ancestry']
     annotations_count = graph['annotations_count']
-    association_depth = graph['association_depth']
     association_breadth = graph['association_breadth']
+    association_depth = graph['association_depth']
+    cooccurrences = graph['co-occurrences']
     code_id = graph['code_id']
+    connectors = graph['connectors']
     creator_id = graph['creator_id']
     description = graph['description']
     name = graph['name']
     name_cs = graph['name_cs']
     name_de = graph['name_de']
     name_en = graph['name_en']
+    name_it = graph['name_it']
     name_pl = graph['name_pl']
     name_sr = graph['name_sr']
+    num_connectors = graph['num_connectors']
+    num_posts = graph['num_posts']
+    number_topics = graph['number_topics']
     parent_code = graph['parent_code']
     postDate = graph['postDate']
     post_id = graph['post_id']
-    uid = graph['uid']
+    posts = graph['posts']
+    topic_id = graph['topic_id']
+    topics = graph['topics']
+    unique_posts = graph['unique_posts']
     unixDate = graph['unixDate']
+    user_id = graph['user_id']
     viewBorderColor = graph['viewBorderColor']
     viewBorderWidth = graph['viewBorderWidth']
-    viewColor = graph['viewColor']
     viewFont = graph['viewFont']
-    viewFontAwesomeIcon = graph['viewFontAwesomeIcon']
     viewFontSize = graph['viewFontSize']
     viewIcon = graph['viewIcon']
     viewLabel = graph['viewLabel']
@@ -55,8 +66,6 @@ def main(graph):
     viewLabelBorderWidth = graph['viewLabelBorderWidth']
     viewLabelColor = graph['viewLabelColor']
     viewLabelPosition = graph['viewLabelPosition']
-    viewLayout = graph['viewLayout']
-    viewMetric = graph['viewMetric']
     viewRotation = graph['viewRotation']
     viewSelection = graph['viewSelection']
     viewShape = graph['viewShape']
@@ -66,52 +75,9 @@ def main(graph):
     viewTexture = graph['viewTexture']
     viewTgtAnchorShape = graph['viewTgtAnchorShape']
     viewTgtAnchorSize = graph['viewTgtAnchorSize']
-
-    def prettify_cooc_graph(graph, intensity=True):
-        '''
-        (graph, bool) => None
-        applies a force directed layout algo on graph.
-        Also maps number of annotiations onto node size
-        if intensity == True, also map edge color intensity to number of co-occurrences
-        '''
-        	# apply the layout
-        params = tlp.getDefaultPluginParameters("FM^3 (OGDF)", graph)
-        params['Unit edge length'] = 100
-        params['Page Format'] = 'Landscape'
-        graph.applyLayoutAlgorithm('FM^3 (OGDF)', viewLayout, params)
-        params = tlp.getDefaultPluginParameters("Curve edges", graph)
-        graph.applyAlgorithm('Curve edges')
-        
-        # set labels
-        params = tlp.getDefaultPluginParameters("To labels", graph)
-        params['input'] = name_en
-        graph.applyStringAlgorithm('To labels', params)
-        white = tlp.Color(255, 255, 255, 255)
-        for n in graph.getNodes():
-            viewLabelBorderWidth[n] = 0
-            viewLabelColor[n] = white
-        
-        # apply size mapping
-        params = tlp.getDefaultPluginParameters("Size Mapping", graph)
-        params['min size'] = 2
-        params['max size'] = 20 
-        params['property'] = annotations_count
-        graph.applySizeAlgorithm('Size Mapping', params)
-        
-        # apply color mapping: edges
-        if intensity == True:
-            colors = [tlp.Color.Gray, tlp.Color.Red]
-            colorScale = tlp.ColorScale(colors)
-            params = tlp.getDefaultPluginParameters("Color Mapping", graph)
-            params['input property'] = association_breadth
-            params['type'] = 'logarithmic'
-            params['target'] = 'edges'
-            params['color scale'] = colorScale
-            # graph.applyColorAlgorithm('Color Mapping', params) edges are color coded for forum
-            # nodes
-            params['input property'] = annotations_count
-            params['target'] = 'nodes'
-            graph.applyColorAlgorithm('Color Mapping', params)
-            
-    print(graph.getName())
-    success = prettify_cooc_graph(graph, True)
+    
+    here = graph.getRoot().getSubGraph('ethno-treasure').getSubGraph('b-stacked').addSubGraph('here')
+    comms = graph.getSubGraphs()
+    success = graph.createMetaNodes(comms, here) 
+    
+    

@@ -10,6 +10,9 @@ In Discourse:
 
 - a call of the kind https://discourse.example.com/t/{topic_id}.json returns the whole topic, with all its posts
 
+In this variant of the script, I build two stacked graphs. I use a map of the informants' ID to their gender. In this project there are two genders.
+Each stacked graph aggregates the association made by informants of the same gender
+
 '''
 
 import requests
@@ -18,6 +21,7 @@ import time
 import sys
 import textwrap
 import discourse_API_config as cng # your API key goes in this file to access non-public data
+import csv
 API_key = cng.API_key
 baseUrl = cng.baseUrl
 
@@ -25,6 +29,7 @@ baseUrl = cng.baseUrl
 # authentication by passing parameters to the url. Read more: https://github.com/edgeryders/discourse/issues/245#issuecomment-657905349
 responses = requests.Session()
 responses.headers.update({"Api-Key": API_key})
+
 
 
 def fetch_category_names():
@@ -212,7 +217,8 @@ def fetch_topics_from_tag(tag):
     topicList = ['something'] # to avoid breaking the while loop   
     # the following loop continues until the page number becomes so high that the topicList is empty 
     while len(topicList) > 0:
-        call = baseUrl + 'tags/' + str(tag) + '.json?page=' + str(i)
+        call = baseUrl + 'tag/' + str(tag) + '.json?page=' + str(i)
+        print(call)
         print ('Reading topics: page ' + str(i))
         time.sleep(.5)
         response = responses.get(call)
@@ -421,12 +427,27 @@ def fetch_annos(tag = ''):
     
     
 
-def fetch_annos_cat(cat):
+def fetch_annos_from_project(project):
     '''
     (str) => list of dicts
-    returns all annos on the topics of a cat
+    returns all annos on the topics of a project
     '''
-    
+    print('Reading annotations...')
+    allAnnotations = []
+    baseCall = baseUrl + 'annotator/projects/'+ str(project) +'/annotations.json?per_page=500'
+    found = 500 # initializing like this to meet the WHILE condition the first time
+    pageCounter = 1 
+    while found == 500:
+        print ('Now reading page ' + str (pageCounter))
+
+        call = baseCall + '&page=' + str(pageCounter)
+        response = responses.get(call).json()
+        allAnnotations = allAnnotations + response
+        pageCounter += 1    
+        found = len(response)    
+    print ('Annotations found: ' + str(len(allAnnotations)))
+    return allAnnotations
+    ## continue here
 def decompose_ancestry(ancestry):
     '''
     (str) => list of strs
@@ -496,6 +517,26 @@ def fetch_codes_from_annos(annoList):
         if str(code['id']) in missingParents:
             codes.append(code)
     return codes
+    
+def fetch_codes_from_project(projectID):
+    '''
+    (str) => list of dicts
+    https://edgeryders.eu/annotator/projects/{project_id}/codes.json
+    '''
+    projectCodes = []
+    baseCall = baseUrl + 'annotator/projects/' + str(projectID) + '/codes.json'
+    found = 500 # initializing like this to meet the WHILE condition the first time
+    pageCounter = 1 
+    while found == 500:
+        print ('Now reading page ' + str (pageCounter))
+        call = baseCall + '?page=' + str(pageCounter)
+        response = responses.get(call).json()
+        found = len(response)
+        projectCodes = projectCodes + response
+        pageCounter += 1        
+    print ('Codes found: ' + str(len(projectCodes)))
+    return projectCodes
+    
 
 def make_categories_map():
     '''
@@ -804,5 +845,9 @@ if __name__ == '__main__':
     greetings = 'Hello world'
     print (greetings)
     # testing a function
-    # success = make_gource_file_from_tag('ethno-opencare', ethno=True)
-    success = fetch_annos('ethno-ngi-forward')
+    success = fetch_codes_from_project(55)
+    print(success[0])
+    print(len(success))
+
+   
+

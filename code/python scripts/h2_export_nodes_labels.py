@@ -1,5 +1,7 @@
-# color code edges according to language
-
+'''
+Use this script to export a list of nodes' labels. 
+For example, a list of the codes with the maximum core value in the stacked graph.
+'''
 from tulip import tlp
 # The updateVisualization(centerViews = True) function can be called
 # during script execution to update the opened views
@@ -15,20 +17,32 @@ from tulip import tlp
 def main(graph):
     ancestry = graph['ancestry']
     annotations_count = graph['annotations_count']
+    association_breadth = graph['association_breadth']
+    association_depth = graph['association_depth']
+    cooccurrences = graph['co-occurrences']
     code_id = graph['code_id']
+    connectors = graph['connectors']
     creator_id = graph['creator_id']
-    degree = graph['degree']
     description = graph['description']
-    forum = graph['forum']
+    name = graph['name']
     name_cs = graph['name_cs']
+    name_de = graph['name_de']
     name_en = graph['name_en']
+    name_it = graph['name_it']
     name_pl = graph['name_pl']
     name_sr = graph['name_sr']
-    numComms = graph['numComms']
+    num_connectors = graph['num_connectors']
+    num_posts = graph['num_posts']
+    number_topics = graph['number_topics']
     parent_code = graph['parent_code']
+    postDate = graph['postDate']
     post_id = graph['post_id']
+    posts = graph['posts']
+    topic_id = graph['topic_id']
+    topics = graph['topics']
+    unique_posts = graph['unique_posts']
+    unixDate = graph['unixDate']
     user_id = graph['user_id']
-    user_name = graph['user_name']
     viewBorderColor = graph['viewBorderColor']
     viewBorderWidth = graph['viewBorderWidth']
     viewColor = graph['viewColor']
@@ -52,49 +66,22 @@ def main(graph):
     viewTexture = graph['viewTexture']
     viewTgtAnchorShape = graph['viewTgtAnchorShape']
     viewTgtAnchorSize = graph['viewTgtAnchorSize']
-    # initialize the colors
-    blue = tlp.Color(102,204,255, 255)  
-    red = tlp.Color(204,51, 0, 255)
-    green = tlp.Color(80,187,140, 255)
-    orange = tlp.Color(255, 153, 0, 255)
-    purple = tlp.Color(255, 0, 255, 200)
-    steel = tlp.Color(160,160,160, 255) ## steel I keep for nodes that participate in more than one conversation
-    colors = [blue, red, green, orange, purple, steel] # need to add more colors
-
-
-    def color_edges():
+    
+    def export_labels(g):
         '''
-        (None) => None
-        colors the edges according to the value of the forum property
+        (graph) => None
+        print and export the labels of the nodes in graph
         '''
-        fora = {} # map from value of forum to color
-        i = 0 
-        for e in graph.getEdges():
-            if forum[e] not in fora:
-                fora[forum[e]] = colors[i]
-                i += 1
-            graph.setEdgePropertiesValues(e, {'viewColor': fora[forum[e]]})
-        print(fora)
-        return None
-        
-    def color_nodes():
-        '''
-        (None) => None
-        color nodes according to the colors of the incident edges.
-        * if all edges are of the same color, the node imherits that color
-        * if there are at least two edges of different colors, the node is colored in steel
-        '''    
-        for n in graph.getNodes():
-            incidentEdgeColors = []
-            for e in graph.getInOutEdges(n):
-                if viewColor[e] not in incidentEdgeColors:
-                    incidentEdgeColors.append(viewColor[e])
-            if len(incidentEdgeColors) == 1:
-                viewColor[n] = incidentEdgeColors[0]
-            else:
-                viewColor[n] = steel
-                
-        
-        
-    success = color_edges()    
-    success = color_nodes()
+        import csv
+        with open ('/Users/albertocottica/Downloads/nodeLabels.csv', 'w') as csvfile: 
+            writer = csv.writer(csvfile, delimiter = ',')
+            nodesList = [] # store in a list to produce an alphabetically sorted list in the end.
+            for n in g.getNodes():
+                nodesList.append(viewLabel[n])
+                nodesList.sort(key=str.lower)
+            for item in nodesList:
+                print(item)
+                writer.writerow([item])
+    
+    success = export_labels(graph)
+  

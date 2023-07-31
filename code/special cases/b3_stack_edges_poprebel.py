@@ -1,6 +1,6 @@
 # run this to stack edges on top of each other
 
-# run from the supergraph of the graphs you want to stack. In general, this is the root graph.
+# before running, use EqualValue to separate the unstacked graph into unstacked subgraphs by forum.
 
 from tulip import *
 
@@ -34,7 +34,9 @@ def findEdge(node1, node2, graph1, directed = False, create = True):
 			else:
 				if create:
 					e = graph1.addEdge(node1, node2)
-					return e                        
+					return e 
+				else:
+					return None                       
 		else:
 			if create:    
 				e = graph1.addEdge(node1, node2)
@@ -44,10 +46,10 @@ def findEdge(node1, node2, graph1, directed = False, create = True):
 
 
 def main(graph): 
-	forum = graph.getStringProperty('forum') # introduced for POREBEL
-	name = graph.getStringProperty("name")
+	name = graph.getStringProperty("name_en")
 	postDate = graph.getStringProperty("postDate")
 	user_id = graph.getStringProperty("user_id")
+	topic_id = graph.getStringProperty('topic_id')
 	unixDate = graph.getDoubleProperty("unixDate")
 	viewBorderColor = graph.getColorProperty("viewBorderColor")
 	viewBorderWidth = graph.getDoubleProperty("viewBorderWidth")
@@ -82,9 +84,15 @@ def main(graph):
 		If the main has no subgraphs, create one, and rename the root. 
 		'''
 		# initialize properties I need
-		cooc = graph.getIntegerProperty('co-occurrences') # stores k(e)
+		post_id = graph.getStringProperty('post_id')
+		posts =  graph.getStringVectorProperty('posts') # stores the list of posts coded with both the codes incident to this edge
+		np = graph.getDoubleProperty('unique_posts') # stores the number of posts coded with both the codes incident to this edge
+		cooc = graph.getIntegerProperty('association_depth') # stores k(e), the number of posts coded with both the codes incident to this edge
 		connectors = graph.getStringVectorProperty('connectors') # stores the list of people making the association. Its length is kn(e)
-		uc = graph.getIntegerProperty('num_connectors') 
+		uc = graph.getIntegerProperty('association_breadth') # stores the number of people making the connection.
+		topics = graph.getStringVectorProperty('topics') # stores the list of topics on which the co-occurrence appears
+		numtops = graph.getIntegerProperty('number_topics') # stores the number of topics
+		forum = graph['forum']
 		gs = []
 		for g in graph.getSubGraphs():
 		    gs.append(g)
@@ -94,65 +102,54 @@ def main(graph):
 		    graph.addCloneSubGraph(gname)
 
 		for g in graph.getSubGraphs():
-			# clone the parallel edges graph onto a new subgraph
+			# clone the parallel edges graph onto a new subgrah
 			nonStacked = g.addCloneSubGraph('nonStacked')
 							
 			# create a stacked subgraph 
 			stacked = g.addSubGraph('stacked')	
 			
-#			# add all nodes in nonStacked to stacked
+			# add all nodes in nonStacked to stacked
 			for n in nonStacked.getNodes():	
 				stacked.addNode(n)
-#				
-			# go over all edges in graph1 and add only one edge to graph2
+				
+			# you go over all edges in graph1 and add only one edge to graph2
 			# also collect the data you are interested in
 			for edge in nonStacked.getEdges():
 				source = nonStacked.source(edge)
 				target = nonStacked.target(edge)
 				edgeColor = viewColor[edge]
-				# source and target are nodes connect
+				# source and target are nodes connected
 				subEdge = findEdge(source, target, stacked, False, False)
 				if subEdge == None: # the stacked does not contain any edge between source and target
-					subEdge = stacked.addEdge(source,target) #create one, then populate its properties
-					success = stacked.setEdgePropertiesValues(subEdge, {'viewColor': edgeColor, 'co-occurrences': 1, 'connectors': [user_id[edge]]})
-					#cooc[subEdge] = 1
-					#uc[subEdge] = user_id[edge]
+					subEdge = stacked.addEdge(source, target)
+					initialize_edge = stacked.setEdgePropertiesValues(subEdge, {'viewColor': edgeColor,  
+					'connectors': [user_id[edge]], 'posts': [post_id[edge]],  
+					'topics': [topic_id[edge]], 'forum': forum[edge]})
 				else:
+					postsList = stacked.getEdgePropertiesValues(subEdge)['posts']
+					postsList.append(post_id[edge])
+					update = stacked.setEdgePropertiesValues(subEdge, {'posts': postsList})
 					cooc[subEdge] += 1
-					connectorsList = graph.getEdgePropertiesValues(subEdge)['connectors']
+					connectorsList = connectors[subEdge] # Bruno's version! graph.getEdgePropertiesValues(subEdge)['connectors']
+					topicsList = topics[subEdge] 
+					postsList = posts[subEdge]
 					if user_id[edge] not in connectorsList:
 						connectorsList.append(user_id[edge])
-						update = graph.setEdgePropertiesValues(subEdge, {'connectors': connectorsList})
-			# last move: iterate over edges of the stacked and compute the kn(e) property
+						update = stacked.setEdgePropertiesValues(subEdge, {'connectors': connectorsList})
+					if topic_id[edge] not in topicsList:
+						topicsList.append(topic_id[edge])
+						update = stacked.setEdgePropertiesValues(subEdge, {'topics': topicsList})
+
+			# last move: iterate over edges of the stacked and compute the numeric properties
 			for subEdge in stacked.getEdges():
 				uc[subEdge] = len(connectors[subEdge])
-		return None
+				cooc[subEdge] = len(posts[subEdge]) # define a function to compute num_posts based on posts_list
+				numtops[subEdge] = len(topics[subEdge])
+				posts_seen = [] # to compute the number of unique contributions make a list where posts appear only once
+				np[subEdge] = len(set(posts[subEdge])) # remove duplicates
+				
+				
 
-	cn = graph.setName('ethno-poprebel')
-	whole = graph.addCloneSubGraph('all fora')	
-	pl = graph.addSubGraph('pl')
-	eu = graph.addSubGraph('eu')
-	cz = graph.addSubGraph('cz')
-	misc = graph.addSubGraph('other')
-	
-	for e in graph.getEdges():
-		source = graph.source(e)
-		target = graph.target(e)
-		if forum[e] == 'Polish':
-			success = pl.addNode(source)
-			success = pl.addNode(target)
-			newEdge = pl.addEdge(e)
-		elif forum[e] == 'International':
-			success = eu.addNode(source)
-			success = eu.addNode(target)
-			newEdge = eu.addEdge(e)
-		elif forum[e] == 'Czech':
-			success = cz.addNode(source)
-			success = cz.addNode(target)	
-			newEdge = cz.addEdge(e)
-		else:
-			success = misc.addNode(source)
-			success = misc.addNode(target)
-			newEdge = misc.addEdge(e)
+
 	success = stackAll()
     
